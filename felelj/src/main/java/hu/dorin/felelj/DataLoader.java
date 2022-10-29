@@ -8,7 +8,9 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.github.javafaker.Faker;
@@ -46,22 +48,37 @@ public class DataLoader implements CommandLineRunner {
         this.faker = faker;
     }
     
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    
     @Override
     public void run(String... args) throws Exception {
     	
 
     Random random = new Random();   
+    
+    
+    
+    //faker.internet().password(1, 5, true, false, true),
 
+    
+    
      // create 10 rows of fake user
      List<User> users = IntStream.rangeClosed(1,10)
                 .mapToObj(i -> new User(
                         faker.name().fullName(),
-                        faker.internet().password(1, 5, true, false, true),
+                        passwordEncoder.encode("1234"),
                         faker.internet().emailAddress(),
                         faker.lorem().characters(6, false, true),
                         Role.values()[random.nextInt(Role.values().length)])
                 ).collect(Collectors.toList());
 
+     User user = new User( "Admin Admin",
+                        passwordEncoder.encode("1234"),
+                        faker.internet().emailAddress(),
+                        "admin",
+                        Role.values()[0]);
+     users.add(user);
      userRepository.saveAll(users);
         
 
@@ -70,15 +87,17 @@ public class DataLoader implements CommandLineRunner {
              .mapToObj(i -> new Test(
                      faker.name().title(),
                      faker.lorem().word(),
-                     new Date(),
+                     faker.number().numberBetween(10, 20),
                      new Date(),
                      faker.random().nextBoolean())
              ).collect(Collectors.toList());
      
     for (Test test : tests) {
  		test.setCreatedBy(users.get(random.nextInt(10)));  
+ 		
+ 	     testRepository.saveAll(tests);
  	}
-     
+     //ettol
     /*List<Test> t = new ArrayList<Test>(); 
     for (Test test : tests) {
     	List<User> completedTestUseres = new ArrayList<User>();
@@ -91,7 +110,8 @@ public class DataLoader implements CommandLineRunner {
 		}
  		
  	}*/
-     
+    //eddig
+     /*
     // userRepository.saveAll(users);
      testRepository.saveAll(tests);
      
@@ -134,6 +154,6 @@ public class DataLoader implements CommandLineRunner {
      choiceRepository.saveAll(choices);
      
     
-
+*/
     }
 }

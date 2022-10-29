@@ -2,6 +2,7 @@ package hu.dorin.felelj.model;
 
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -19,10 +20,12 @@ import lombok.Data;
 public class User{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 	private String name;
 	private String password;
 	private String email;
+	
+	@Column(unique=true)
 	private String identifier;
 	private Role role;
 
@@ -30,7 +33,7 @@ public class User{
 	private List<Test> createdTests;
 	
 	@OneToMany(mappedBy = "user")
-	private List<TestFill> testfills;
+	private List<TestFill> testFills;
 	
 	@ManyToMany
 	@JoinTable(name = "test_class", 

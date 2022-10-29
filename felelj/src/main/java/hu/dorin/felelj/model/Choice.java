@@ -20,14 +20,14 @@ import lombok.Data;
 public class Choice{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 	private String text;
 	
 	@CreatedDate
 	private Instant createdDate;
 	
 	@LastModifiedDate
-	private Instant LastModifiedDate;
+	private Instant lastModifiedDate;
 	
 	@ManyToOne
 	private Task task;

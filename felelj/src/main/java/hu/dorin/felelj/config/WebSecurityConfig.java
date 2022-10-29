@@ -1,5 +1,7 @@
 package hu.dorin.felelj.config;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,12 +12,17 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import hu.dorin.felelj.security.AuthEntryPointJwt;
 import hu.dorin.felelj.security.JwtTokenFilter;
+import hu.dorin.felelj.security.UserDetailsServiceImpl;
 
 @Configuration
 @EnableWebSecurity(debug = true)
@@ -28,6 +35,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private AuthEntryPointJwt unauthorizedHandler;
 	
+	@Autowired
+	private UserDetailsServiceImpl userDetailsService;
+	
 	@Bean
 	public JwtTokenFilter authenticationJwtTokenFilter() {
 		return new JwtTokenFilter();
@@ -36,10 +46,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
 		authenticationManagerBuilder
-		//.userDetailsService(userDetailsService)
-		.inMemoryAuthentication().withUser("alma").password("1234").roles("Teacher")
+		.userDetailsService(userDetailsService)
+		//.inMemoryAuthentication().withUser("alma").password("1234")
+		//.roles("Teacher")
 		//.authorities("ROLE_USER").and()
-		.and()
+		//.and()
 		.passwordEncoder(passwordEncoder());
 	}
 	
@@ -51,21 +62,42 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-		return NoOpPasswordEncoder.getInstance();
+		//return NoOpPasswordEncoder.getInstance();
+		return new BCryptPasswordEncoder();
 	}
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.cors().and().csrf().disable()
+		http.cors(cors -> cors.configurationSource(corsConfig())).csrf().disable()
 			.exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
 			.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 			.authorizeRequests()
-				.antMatchers("/users").permitAll()
-				.antMatchers("/tests").permitAll();
-				//hasRole("Teacher");//.authenticated();//.hasRole("Teacher");
+			.antMatchers("/**").permitAll();
+			//.antMatchers("/**").authenticated();
+			//.hasRole("Teacher");
 				//.and()
 				//.formLogin().permitAll();
-				//.anyRequest().authenticated();
+				//.anyRequest().autShenticated();
 		
 		http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+	}
+	
+	@Bean
+	public CorsConfigurationSource corsConfig() {
+		final CorsConfiguration configuration = new CorsConfiguration();
+		configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+		configuration.setAllowedMethods(List.of("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH"));
+
+		// setAllowCredentials(true) is important, otherwise:
+		// The value of the 'Access-Control-Allow-Origin' header in the response must
+		// not be the wildcard '*' when the request's credentials mode is 'include'.
+		configuration.setAllowCredentials(true);
+
+		// setAllowedHeaders is important! Without it, OPTIONS preflight request
+		// will fail with 403 Invalid CORS request
+		configuration.setAllowedHeaders(List.of("*"));				
+		
+		final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+		return source;	
 	}
 }

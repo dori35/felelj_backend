@@ -17,7 +17,7 @@ import lombok.Data;
 public class TestFill{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 	private Date fillDate;
 	private Integer point;
 
@@ -27,7 +27,7 @@ public class TestFill{
 	@ManyToOne
 	private User user;
 	
-	@OneToMany(mappedBy = "testfill")
+	@OneToMany(mappedBy = "testFill")
 	private List<Answer> answers;
 	
 	public TestFill() {

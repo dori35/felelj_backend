@@ -21,18 +21,18 @@ import lombok.Data;
 public class Task{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 	private String text;
 	private Type answerType ;
-	private int timeFrame;
-	private int point;
+	private Integer timeFrame;
+	private Integer point;
 	private String solution;
 	
 	@CreatedDate
 	private Instant createdDate;
 	
 	@LastModifiedDate
-	private Instant LastModifiedDate;
+	private Instant lastModifiedDate;
 	
 	@ManyToOne
 	private Test test;
@@ -46,7 +46,7 @@ public class Task{
 	public Task() {
 	}
 
-	public Task(String text,Type answerType ,int timeFrame,int point, String solution) {
+	public Task(String text,Type answerType ,Integer timeFrame,Integer point, String solution) {
 		this.text =text;
 		this.answerType = answerType;
 		this.timeFrame = timeFrame;

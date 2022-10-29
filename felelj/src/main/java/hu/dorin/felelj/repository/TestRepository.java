@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import hu.dorin.felelj.model.Test;
 
 @RepositoryRestResource
-@CrossOrigin("http://localhost:3000")
-public interface TestRepository extends CrudRepository<Test, Integer> {
+public interface TestRepository extends CrudRepository<Test, Long> {
 
 }

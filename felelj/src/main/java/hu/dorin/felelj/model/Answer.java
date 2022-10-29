@@ -18,20 +18,20 @@ import lombok.Data;
 public class Answer{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 	private String answer;
 	
 	@CreatedDate
 	private Instant createdDate;
 	
 	@LastModifiedDate
-	private Instant LastModifiedDate;
+	private Instant lastModifiedDate;
 	
 	@ManyToOne
 	private Task task;
 	
 	@ManyToOne
-	private TestFill testfill;
+	private TestFill testFill;
 
 	public Answer() {
 	}

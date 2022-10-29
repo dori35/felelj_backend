@@ -6,6 +6,6 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import hu.dorin.felelj.model.Task;
 
 @RepositoryRestResource
-public interface TaskRepository extends CrudRepository<Task, Integer> {
+public interface TaskRepository extends CrudRepository<Task, Long> {
 
 }

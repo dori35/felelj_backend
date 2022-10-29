@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -17,22 +18,29 @@ import javax.persistence.OneToMany;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import lombok.Data;
 
 @Data
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 public class Test {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 	private String title;
 	private String subject;
-	private Date time;
+	private Integer time;
 	private Date startDate;
 	private Boolean random;
 	
+	@CreatedDate
+	private Instant createdDate;
+	
+	@LastModifiedDate
+	private Instant lastModifiedDate;
 	
 	@ManyToOne
 	private User createdBy ;
@@ -44,18 +52,12 @@ public class Test {
 	private List<Task> tasks;
 	
 	@OneToMany(mappedBy = "test")
-	private List<TestFill> testfills;
-	
-	@CreatedDate
-	private Instant createdDate;
-	
-	@LastModifiedDate
-	private Instant LastModifiedDate;
+	private List<TestFill> testFills;
 	
 	public Test() {
 	}
 
-	public Test(String title,  String subject,Date time,Date startDate,Boolean random) {
+	public Test(String title,  String subject,Integer time,Date startDate,Boolean random) {
 		this.title = title;
 		this.subject = subject;
 		this.time = time;

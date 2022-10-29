@@ -6,6 +6,6 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import hu.dorin.felelj.model.Answer;
 
 @RepositoryRestResource
-public interface AnswerRepository extends CrudRepository<Answer, Integer> {
+public interface AnswerRepository extends CrudRepository<Answer, Long> {
 
 }
