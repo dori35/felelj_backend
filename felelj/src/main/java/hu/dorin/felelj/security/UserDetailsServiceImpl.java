@@ -33,10 +33,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 		List<SimpleGrantedAuthority> authorities;
 		switch (user.getRole()) {
 		case TEACHER: 
-			authorities = List.of(new SimpleGrantedAuthority("ROLE_TEACHER"), new SimpleGrantedAuthority("ROLE_STUDENT"));
+			authorities = List.of(new SimpleGrantedAuthority("TEACHER"), new SimpleGrantedAuthority("STUDENT"));
 			break;
 		case STUDENT:
-			authorities = List.of(new SimpleGrantedAuthority("ROLE_STUDENT"));
+			authorities = List.of(new SimpleGrantedAuthority("STUDENT"));
 			break;
 		default:
 			authorities = List.of();
