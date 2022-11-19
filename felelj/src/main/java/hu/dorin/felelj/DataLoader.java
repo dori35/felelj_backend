@@ -1,12 +1,11 @@
 package hu.dorin.felelj;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 
 import com.github.javafaker.Faker;
 
-import hu.dorin.felelj.model.Answer;
 import hu.dorin.felelj.model.Choice;
 import hu.dorin.felelj.model.Task;
 import hu.dorin.felelj.model.Test;
@@ -28,14 +26,12 @@ import hu.dorin.felelj.repository.TaskRepository;
 import hu.dorin.felelj.repository.TestRepository;
 import hu.dorin.felelj.repository.UserRepository;
 
-
 @Component
 public class DataLoader implements CommandLineRunner {
     private final UserRepository userRepository;
     private final TestRepository testRepository;
     private final TaskRepository taskRepository;
     private final ChoiceRepository choiceRepository;
-    private final AnswerRepository answerRepository;
     private final Faker faker;
     
 
@@ -44,7 +40,6 @@ public class DataLoader implements CommandLineRunner {
         this.testRepository = testRepository;
         this.taskRepository = taskRepository;
         this.choiceRepository = choiceRepository;
-        this.answerRepository = answerRepository;
         this.faker = faker;
     }
     
@@ -56,12 +51,6 @@ public class DataLoader implements CommandLineRunner {
     	
 
     Random random = new Random();   
-    
-    
-    
-    //faker.internet().password(1, 5, true, false, true),
-
-    
     
      // create 10 rows of fake user
      List<User> users = IntStream.rangeClosed(1,10)
@@ -80,80 +69,146 @@ public class DataLoader implements CommandLineRunner {
                         Role.values()[0]);
      users.add(user);
      userRepository.saveAll(users);
-        
-
-     // create 10 rows of fake test
-     List<Test> tests = IntStream.rangeClosed(1,10)
+  
+     // create 30 rows of fake test
+     List<Test> tests = IntStream.rangeClosed(1,30)
              .mapToObj(i -> new Test(
                      faker.name().title(),
                      faker.lorem().word(),
-                     faker.number().numberBetween(10, 20),
-                     new Date(),
                      faker.random().nextBoolean())
              ).collect(Collectors.toList());
      
     for (Test test : tests) {
- 		test.setCreatedBy(users.get(random.nextInt(10)));  
- 		
- 	     testRepository.saveAll(tests);
+    	
+    	User u = users.get(random.nextInt(11));
+    	while(u.getRole()==Role.STUDENT)
+    	{
+    		u = users.get(random.nextInt(11));
+    	}
+ 		test.setCreatedBy(u);  
  	}
-     //ettol
-    /*List<Test> t = new ArrayList<Test>(); 
-    for (Test test : tests) {
-    	List<User> completedTestUseres = new ArrayList<User>();
-    	completedTestUseres.add(users.get(random.nextInt(10)));
- 		test.setUsers(completedTestUseres);  
- 		for (User completedTestUser : completedTestUseres) {
- 			t =completedTestUser.getTests();
- 			t.add(test);
- 			completedTestUser.setTests(t);
-		}
- 		
- 	}*/
-    //eddig
-     /*
-    // userRepository.saveAll(users);
-     testRepository.saveAll(tests);
-     
- 	
-     // create 30 rows of fake task
-     List<Task> tasks = IntStream.rangeClosed(1,30)
+    
+    testRepository.saveAll(tests);
+    
+     // create 20 rows of fake task
+     List<Task> tasks = IntStream.rangeClosed(1,20)
              .mapToObj(i -> new Task(
                      faker.lorem().sentence(),
                      Type.values()[random.nextInt(Type.values().length)],
-                     random.nextInt(1001),
-                     random.nextInt(51),
+                     random.nextInt(10,501),
+                     random.nextInt(1, 11),
                      faker.lorem().word())
              ).collect(Collectors.toList());
 
+     Integer trueFalseTaskNumber = 0;
      for (Task task : tasks) {
-  		task.setTest(tests.get(random.nextInt(10)));  
+  		task.setTest(tests.get(random.nextInt(30)));  
+  		if(task.getAnswerType()==Type.TRUE_FALSE)
+  		{
+  	  		trueFalseTaskNumber+=1;
+  		}
   	 }
       
      taskRepository.saveAll(tasks);
      
-     
-     // create 10 rows of fake answer
-     List<Answer> answers = IntStream.rangeClosed(1,10)
-             .mapToObj(i -> new Answer(
-            		 faker.lorem().sentence())
-             ).collect(Collectors.toList());
-
-     for (Answer answer : answers) {
-  		answer.setTask(tasks.get(random.nextInt(30)));  
-  	 }
-     answerRepository.saveAll(answers);
-
-     
-     // create 10 rows of fake choice
-     List<Choice> choices = IntStream.rangeClosed(1,10)
+     int choiceNumber = (tasks.size()-trueFalseTaskNumber) *4;
+     // create 80 rows of fake choice
+     List<Choice> choices = IntStream.rangeClosed(1,choiceNumber)
              .mapToObj(i -> new Choice(
-                     faker.lorem().sentence())
+                     faker.lorem().word())
              ).collect(Collectors.toList());
+    
+     choiceRepository.saveAll(choices);
+     int k=-1;
+     int r;
+     List<Integer> list =  new ArrayList<Integer>(List.of(0,1,2,3));
+     Task taskForChoice = null ;
+     for (int i = 0; i < (tasks.size()-trueFalseTaskNumber) ; i++) {
+    	 k++;
+    	 for (int j = 0; j < 4; j++) {
+    		 taskForChoice = tasks.get(k);
+    		
+    		 if(taskForChoice!=null )
+    		 {
+    			 while(taskForChoice.getAnswerType()==Type.TRUE_FALSE)
+        		 {
+        			 k++;
+        			 taskForChoice = tasks.get(k); 
+        		 }
+        		 
+                 choices.get(i*4+j).setTask(taskForChoice);  
+    		 }
+    	 }
+    	 
+    
+    	 if(taskForChoice!=null && taskForChoice.getAnswerType()!=Type.TRUE_FALSE)
+    	 {
+    		 if(taskForChoice.getAnswerType()==Type.ORDER_LIST)
+        	 {
+				 Collections.shuffle(list);
+				 taskForChoice.setSolution( choices.get(i*4+list.get(0)).getText() + ","+ choices.get(i*4+list.get(1)).getText()+ ","+ choices.get(i*4+list.get(2)).getText()+ ","+choices.get(i*4+list.get(3)).getText() );
+		 	 
+        	 }else if(taskForChoice.getAnswerType()==Type.ONE_CHOICE)
+        	 {
+        		 taskForChoice.setSolution( choices.get(i*4+random.nextInt(4)).getText());	 
+        	 }else if(taskForChoice.getAnswerType()==Type.MULTIPLE_CHOICES)
+        	 {
+        		 r = random.nextInt(4);
+        		 switch (r) {
+				case 0:
+					taskForChoice.setSolution( choices.get(i*4+random.nextInt(4)).getText());
+            
+					break;
+				case 1:
+					Collections.shuffle(list);
+					taskForChoice.setSolution( choices.get(i*4+list.get(0)).getText()+ ","+ choices.get(i*4+list.get(0)).getText());
+					break;
+				case 2:
+					Collections.shuffle(list);
+					taskForChoice.setSolution( choices.get(i*4+list.get(0)).getText()+ ","+ choices.get(i*4+list.get(1)).getText()+","+ choices.get(i*4+list.get(2)).getText());
+					break;
+				case 3:
+					Collections.shuffle(list);
+					taskForChoice.setSolution( choices.get(i*4+list.get(0)).getText()+ ","+ choices.get(i*4+list.get(1)).getText()+","+ choices.get(i*4+list.get(2)).getText()+","+ choices.get(i*4+list.get(3)).getText());
+					
+					break;
 
+				default:
+					break;
+				}
+        	 }
+    	 }
+    	 taskRepository.save(taskForChoice);
+    	 }
      choiceRepository.saveAll(choices);
      
-    
-*/
-    }
+     
+     k=-1;
+     for (int i = 0; i < trueFalseTaskNumber ; i++) {
+    	 k++;
+    	 taskForChoice = tasks.get(k);
+    		
+    	 if(taskForChoice!=null )
+    	 {
+    			 while(taskForChoice.getAnswerType()!=Type.TRUE_FALSE)
+        		 {
+        			 k++;
+        			 taskForChoice = tasks.get(k); 
+        		 }
+                 if(taskForChoice.getAnswerType()==Type.TRUE_FALSE){
+        			 taskForChoice.setSolution(Integer.toString(random.nextInt(1)));
+        		 }
+    		 
+    	  }
+    	 
+    	 if(taskForChoice!=null && taskForChoice.getAnswerType()==Type.TRUE_FALSE)
+     	 {
+    		 taskForChoice.setSolution(Integer.toString(random.nextInt(1)));
+      	 }
+      	     	 
+      	 taskRepository.save(taskForChoice);
+      }
+       
+     
+     }
 }

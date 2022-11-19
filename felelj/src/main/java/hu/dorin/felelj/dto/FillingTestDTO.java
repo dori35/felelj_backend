@@ -1,7 +1,8 @@
 package hu.dorin.felelj.dto;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
-
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,16 +11,15 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TestDTO {
+public class FillingTestDTO {
 	
 	private Long id;
 	private String title;
 	private String subject;
+	private Date time;
 	private Boolean random;
-	private String createdDate;
-	private Integer time = 0;
 	private Integer point = 0;
-	private Integer taskNumber = 0;
-	private List<TaskDTO> tasks;
+	private Integer taskNumber =10;
+	private List<FillingTaskDTO> tasks;
 
 }

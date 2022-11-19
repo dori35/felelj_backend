@@ -1,6 +1,5 @@
 package hu.dorin.felelj.dto;
 
-import java.time.Instant;
 import java.util.Date;
 
 import lombok.AllArgsConstructor;

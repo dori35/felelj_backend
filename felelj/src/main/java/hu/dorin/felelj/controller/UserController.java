@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import hu.dorin.felelj.dto.LoginUserDTO;
-import hu.dorin.felelj.dto.TestDTO;
 import hu.dorin.felelj.dto.UserDTO;
 import hu.dorin.felelj.enums.Role;
-import hu.dorin.felelj.model.Test;
 import hu.dorin.felelj.model.User;
 import hu.dorin.felelj.repository.UserRepository;
+import hu.dorin.felelj.security.JwtResponse;
+import hu.dorin.felelj.security.LoginResponse;
 import hu.dorin.felelj.security.SignUpRequest;
 
 
@@ -36,23 +36,6 @@ public class UserController {
 	 @Autowired
 	 private PasswordEncoder passwordEncoder;
 	 
-	/*@GetMapping("/userdtos")
-	public List<UserDTO> getUsers() {
-		Iterable<User> users = userRepository.findAll();
-		List<UserDTO> userDtosList = new ArrayList<>();
-		for (User u : users) {
-			List<TestDTO> testDtoList = new ArrayList<>();
-			for (Test t : u.getCreatedTests()) {
-				TestDTO tdto = modelMapper.map(t, TestDTO.class);
-				testDtoList.add(tdto);
-			}
-			UserDTO dto = new UserDTO(u.getId(), u.getName(),u.getPassword(), u.getEmail(), u.getIdentifier(),u.getRole(),testDtoList);
-			userDtosList.add(dto);
-		}
-		
-		return userDtosList;
-	}*/
-	
 	@GetMapping("/userdtos/{id}")
 	public UserDTO getUser(@PathVariable("id") Long id) {
 		Optional<User> user = userRepository.findById(id);
@@ -76,38 +59,6 @@ public class UserController {
 	}
 	
 
-	@GetMapping("/testdtos/{id}")
-	public List<TestDTO> getTests(@PathVariable("id") String id) {
-		Optional<User> user = userRepository.findById(Long.parseLong(id));
-		List<TestDTO> testDtoList = new ArrayList<>();
-		if(!user.isPresent())
-		{
-			return testDtoList;
-		}
-		
-		for (Test t : user.get().getCreatedTests()) {
-				TestDTO tdto = modelMapper.map(t, TestDTO.class);
-				testDtoList.add(tdto);
-		}
-		return testDtoList;
-	}
-	
-	@GetMapping("/completedtestdtos/{id}")
-	public List<TestDTO> getCompletedTests(@PathVariable("id") String id) {
-		Optional<User> user = userRepository.findById(Long.parseLong(id));
-		List<TestDTO> testDtoList = new ArrayList<>();
-		if(!user.isPresent())
-		{
-			return testDtoList;
-		}
-		
-		for (Test t : user.get().getCreatedTests()) {
-				TestDTO tdto = modelMapper.map(t, TestDTO.class);
-				testDtoList.add(tdto);
-		}
-		return testDtoList;
-	}
-
 	
 	@GetMapping("/login/users/{identifier}")
 	public LoginUserDTO processLoginUser(@PathVariable("identifier") String identifier) {
@@ -126,10 +77,37 @@ public class UserController {
 	}
 	
 	@PostMapping("/signup")
-	public String processRegisterUser(@RequestBody SignUpRequest request) {
+	public ResponseEntity<?> processRegisterUser(@RequestBody SignUpRequest request) {
 
+		if(request.getName().isEmpty())
+		{
+			return ResponseEntity.ok(new LoginResponse("empty name"));
+		}
+		
+		if( request.getPassword().length()<4) {
+			return ResponseEntity.ok(new LoginResponse("short password"));
+		}else if(!request.getPassword().equals(request.getPassword().toLowerCase())) {
+			return ResponseEntity.ok(new LoginResponse("password must contain lowercase letter"));
+		} 
+		else if(!request.getPassword().equals(request.getPassword().toUpperCase()) ) {
+			return ResponseEntity.ok(new LoginResponse("password must contain uppercase letter"));
+		}
+		else if(request.getPassword().matches(".*\\d.*")){
+			return ResponseEntity.ok(new LoginResponse("password must contain numbers"));
+		}
+		
+		if(request.getIdentifier().length() != 6)
+		{
+			return ResponseEntity.ok(new LoginResponse("identifier must be 6 character"));
+		}
+		
+		
+        //emailnek ->annotáció?  @Email(regex = "\W*((?i)@companyname.com(?-i))") 
+		//role -> eleg?
+		
 		User user = new User(request.getName(), passwordEncoder.encode( request.getPassword()), request.getEmail(), request.getIdentifier(),Role.valueOf( request.getRole())) ;
 		userRepository.save(user);
-		return "success registration";
+		return ResponseEntity.ok(new LoginResponse("success registration"));
+		
 	}
 }

@@ -1,6 +1,5 @@
 package hu.dorin.felelj.dto;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import hu.dorin.felelj.enums.Role;

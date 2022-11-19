@@ -21,13 +21,13 @@ public class User{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	@Column(unique=true)
+	private String identifier;
 	private String name;
 	private String password;
 	private String email;
-	
-	@Column(unique=true)
-	private String identifier;
 	private Role role;
+	
 
 	@OneToMany(mappedBy = "createdBy")
 	private List<Test> createdTests;
