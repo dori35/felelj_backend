@@ -28,6 +28,7 @@ public class Test {
 	private String title;
 	private String subject;
 	private Boolean random;
+	private Boolean isActive = true;
 	
 	@CreatedDate
 	private Instant createdDate;
