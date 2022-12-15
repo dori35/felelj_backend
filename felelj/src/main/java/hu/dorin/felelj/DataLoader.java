@@ -95,7 +95,7 @@ public class DataLoader implements CommandLineRunner {
              .mapToObj(i -> new Task(
                      faker.lorem().sentence(),
                      Type.values()[random.nextInt(Type.values().length)],
-                     random.nextInt(10,501),
+                     random.nextInt(5,21),
                      random.nextInt(1, 11),
                      faker.lorem().word())
              ).collect(Collectors.toList());
@@ -103,7 +103,7 @@ public class DataLoader implements CommandLineRunner {
      Integer trueFalseTaskNumber = 0;
      for (Task task : tasks) {
   		task.setTest(tests.get(random.nextInt(30)));  
-  		if(task.getAnswerType()==Type.TRUE_FALSE)
+  		if(task.getTaskType()==Type.TRUE_FALSE)
   		{
   	  		trueFalseTaskNumber+=1;
   		}
@@ -130,7 +130,7 @@ public class DataLoader implements CommandLineRunner {
     		
     		 if(taskForChoice!=null )
     		 {
-    			 while(taskForChoice.getAnswerType()==Type.TRUE_FALSE)
+    			 while(taskForChoice.getTaskType()==Type.TRUE_FALSE)
         		 {
         			 k++;
         			 taskForChoice = tasks.get(k); 
@@ -141,36 +141,30 @@ public class DataLoader implements CommandLineRunner {
     	 }
     	 
     
-    	 if(taskForChoice!=null && taskForChoice.getAnswerType()!=Type.TRUE_FALSE)
+    	 if(taskForChoice!=null && taskForChoice.getTaskType()!=Type.TRUE_FALSE)
     	 {
-    		 if(taskForChoice.getAnswerType()==Type.ORDER_LIST)
+    		 if(taskForChoice.getTaskType()==Type.ORDER_LIST)
         	 {
 				 Collections.shuffle(list);
-				 taskForChoice.setSolution( choices.get(i*4+list.get(0)).getText() + ","+ choices.get(i*4+list.get(1)).getText()+ ","+ choices.get(i*4+list.get(2)).getText()+ ","+choices.get(i*4+list.get(3)).getText() );
-		 	 
-        	 }else if(taskForChoice.getAnswerType()==Type.ONE_CHOICE)
+				 taskForChoice.setSolution( choices.get(i*4+list.get(0)).getId() + ","+ choices.get(i*4+list.get(1)).getId() + ","+ choices.get(i*4+list.get(2)).getId() + ","+choices.get(i*4+list.get(3)).getId());
+        	 }else if(taskForChoice.getTaskType()==Type.ONE_CHOICE)
         	 {
-        		 taskForChoice.setSolution( choices.get(i*4+random.nextInt(4)).getText());	 
-        	 }else if(taskForChoice.getAnswerType()==Type.MULTIPLE_CHOICES)
+        		  taskForChoice.setSolution( String.valueOf(choices.get(i*4+random.nextInt(4)).getId()));
+        	 }else if(taskForChoice.getTaskType()==Type.MULTIPLE_CHOICES)
         	 {
-        		 r = random.nextInt(4);
+        		 r = random.nextInt(1,4);
         		 switch (r) {
-				case 0:
-					taskForChoice.setSolution( choices.get(i*4+random.nextInt(4)).getText());
-            
-					break;
 				case 1:
 					Collections.shuffle(list);
-					taskForChoice.setSolution( choices.get(i*4+list.get(0)).getText()+ ","+ choices.get(i*4+list.get(0)).getText());
+					taskForChoice.setSolution( choices.get(i*4+list.get(0)).getId()+ ","+ choices.get(i*4+list.get(1)).getId());
 					break;
 				case 2:
 					Collections.shuffle(list);
-					taskForChoice.setSolution( choices.get(i*4+list.get(0)).getText()+ ","+ choices.get(i*4+list.get(1)).getText()+","+ choices.get(i*4+list.get(2)).getText());
+					taskForChoice.setSolution( choices.get(i*4+list.get(0)).getId()+ ","+ choices.get(i*4+list.get(1)).getId()+","+ choices.get(i*4+list.get(2)).getId());
 					break;
 				case 3:
 					Collections.shuffle(list);
-					taskForChoice.setSolution( choices.get(i*4+list.get(0)).getText()+ ","+ choices.get(i*4+list.get(1)).getText()+","+ choices.get(i*4+list.get(2)).getText()+","+ choices.get(i*4+list.get(3)).getText());
-					
+					taskForChoice.setSolution( choices.get(i*4+list.get(0)).getId()+ ","+ choices.get(i*4+list.get(1)).getId()+","+ choices.get(i*4+list.get(2)).getId()+","+ choices.get(i*4+list.get(3)).getId());
 					break;
 
 				default:
@@ -190,18 +184,18 @@ public class DataLoader implements CommandLineRunner {
     		
     	 if(taskForChoice!=null )
     	 {
-    			 while(taskForChoice.getAnswerType()!=Type.TRUE_FALSE)
+    			 while(taskForChoice.getTaskType()!=Type.TRUE_FALSE)
         		 {
         			 k++;
         			 taskForChoice = tasks.get(k); 
         		 }
-                 if(taskForChoice.getAnswerType()==Type.TRUE_FALSE){
+                 if(taskForChoice.getTaskType()==Type.TRUE_FALSE){
         			 taskForChoice.setSolution(Integer.toString(random.nextInt(1)));
         		 }
     		 
     	  }
     	 
-    	 if(taskForChoice!=null && taskForChoice.getAnswerType()==Type.TRUE_FALSE)
+    	 if(taskForChoice!=null && taskForChoice.getTaskType()==Type.TRUE_FALSE)
      	 {
     		 taskForChoice.setSolution(Integer.toString(random.nextInt(1)));
       	 }

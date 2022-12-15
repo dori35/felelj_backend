@@ -14,7 +14,7 @@ public class FillingTaskDTO {
 	
 	private Long id;
 	private String text;
-	private Type answerType ;
+	private Type taskType ;
 	private Integer timeFrame;
 	private Integer point;
 	private List<ChoiceDTO> choices;

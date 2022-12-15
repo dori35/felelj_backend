@@ -1,6 +1,7 @@
 package hu.dorin.felelj.model;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.Entity;
@@ -8,7 +9,6 @@ import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
@@ -29,15 +29,14 @@ public class Test {
 	private String subject;
 	private Boolean random;
 	private Boolean isActive = true;
+	private String url ;
+	private Date startDate ;
 	
 	@CreatedDate
 	private Instant createdDate;
 	
 	@ManyToOne
 	private User createdBy ;
-
-	@ManyToMany(mappedBy = "completedTests")
-	private List<User> submitters ;
 	
 	@OneToMany(mappedBy = "test")
 	private List<Task> tasks;

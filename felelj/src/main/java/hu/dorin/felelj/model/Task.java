@@ -25,7 +25,7 @@ public class Task{
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private String text;
-	private Type answerType ;
+	private Type taskType ;
 	private Integer timeFrame;
 	private Integer point;
 	private String solution;
@@ -45,9 +45,9 @@ public class Task{
 	public Task() {
 	}
 
-	public Task(String text,Type answerType ,Integer timeFrame,Integer point, String solution) {
+	public Task(String text,Type taskType ,Integer timeFrame,Integer point, String solution) {
 		this.text =text;
-		this.answerType = answerType;
+		this.taskType = taskType;
 		this.timeFrame = timeFrame;
 		this.point = point;
 		this.solution = solution;
