@@ -1,5 +1,7 @@
 package hu.dorin.felelj.controller;
 
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -7,7 +9,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -215,7 +220,7 @@ public class TestController {
 		
 		List<Answer> answerList = new ArrayList<Answer>();
 		Integer totalPoints = 0;
-		TestFill testFill = new TestFill( test, user);
+		TestFill testFill = new TestFill( test, user,request.getStartDate());
 		testFillRepository.save(testFill);
 		for ( AnswerRequest answerToTask : request.getAnswers()) {
 			
@@ -513,59 +518,50 @@ public class TestController {
 			return null;
 		}
 		
-		List<TestResultDTO> testResultDtoList = new ArrayList<TestResultDTO>();
+		Integer testTimeFrame = 0;
+		Integer testPoint = 0;
+		for(Task task : test.getTasks())
+		{
+			testTimeFrame+=task.getTimeFrame();
+			testPoint+=task.getPoint();
+		}
+		Integer taskNumber = test.getTasks().size();
 		
 		List<TestFill> testFillList = testFillRepository.findByTest(test);
 		testFillList.sort(Comparator.comparing(o -> o.getFillDate()));
 		Collections.reverse(testFillList);
-		//(hashmap)->ennek meg egy string a kulcsa(idopont),erteke testfill obj lista
-		
-		for (TestFill testFill : testFillList) {
-			//(hashmap) feltoltes
-		}
-		//for(hashmap)
-		/*for (TestFill testFill : testFillList) {
-			User filler = testFill.getUser();
-			TestResultDTO testResultDto = new TestResultDTO();
-			j
-			testResultDto.setTestId(test.getId());
-			testResultDto.setTitle(test.getTitle());
-			testResultDto.setSubject(test.getSubject());
-			testResultDto.setTaskNumber(test.getTasks().size());
-			testResultDto.setFillDate(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").withZone(ZoneId.of("Europe/Budapest")).format(testFill.getFillDate()));
-			
-			Integer testTimeFrame=0;
-			Integer testPoint=0;
-			for(Task task : test.getTasks())
-			{
-				testTimeFrame+=task.getTimeFrame();
-				testPoint+=task.getPoint();
-			}
-			testResultDto.setMaxPoint(testPoint);
-			testResultDto.setTimeFrame(testTimeFrame);
-			testResultDtoList.add(testResultDto);
-		}
-		*/
-		
-        /*
-		List<UserResultDto> userResultDtoList = new ArrayList<UserResultDto>();
-		
-		UserResultDTO userResultDto = new UserResultDTO();
-		userResultDto.setIdentifiers(filler.getIdentifier());
-		userResultDto.setCurrentPoint((testFill.getPoint()));
-			userResultDtoList.add(userResultDto);
-			testResultDto.setFillers(userResultDtoList);
-			
-		
-		private Integer averagePoint = 0;
-		private Integer bestPoint = 0;
-		private Integer leastPoint = 0;
-		private Integer fillersNumber = 0;
-		
-		private List<UserResultDTO> fillers;*/
-		
-		return testResultDtoList;
-		
+
+        Map<String, List<TestFill>> filledByMinute = new HashMap<>();        
+        
+        for (TestFill f : testFillList) {
+        	if(f.getStartDate()!=null)
+        	{
+        	
+	            String formattedTime = f.getStartDate();
+	            
+	            if (!filledByMinute.containsKey(formattedTime)) {
+	                filledByMinute.put(formattedTime, new ArrayList<>());
+	            }
+	
+	            filledByMinute.get(formattedTime).add(f);
+        	}
+        }
+        
+        List<TestResultDTO> testResultDTOList = new ArrayList<TestResultDTO>();
+        
+        for (Entry<String, List<TestFill>> entry : filledByMinute.entrySet()) {
+            
+            double avgPoint = entry.getValue().stream().
+                    mapToInt(f -> f.getPoint()).average().orElse(0);
+            int bestPoint = entry.getValue().stream().mapToInt(TestFill::getPoint).max().orElse(0);
+            int lestPoint = entry.getValue().stream().mapToInt(TestFill::getPoint).min().orElse(0);
+            int fillersNumber = entry.getValue().size();
+         
+            
+            testResultDTOList.add(new TestResultDTO(entry.getKey(), avgPoint, bestPoint,lestPoint,fillersNumber,test.getId(),test.getTitle(),test.getSubject(),test.getRandom(),testTimeFrame,testPoint,taskNumber));
+        }
+        
+        return testResultDTOList;
 	}
 
 }

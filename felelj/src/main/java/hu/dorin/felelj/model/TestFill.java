@@ -1,6 +1,7 @@
 package hu.dorin.felelj.model;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.Entity;
@@ -27,6 +28,7 @@ public class TestFill{
 	@CreatedDate
 	private Instant fillDate;
 	private Integer point;
+	private String startDate;
 
 	@ManyToOne
 	private Test test;
@@ -40,9 +42,10 @@ public class TestFill{
 	public TestFill() {
 	}
 	
-	public TestFill(Test test,User user) {
+	public TestFill(Test test,User user,String startDate) {
 		this.test = test;
 		this.user = user;
+		this.startDate = startDate;
 	}
 		
 

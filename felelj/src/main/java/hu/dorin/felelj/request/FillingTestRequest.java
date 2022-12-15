@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class FillingTestRequest {
 	private List<AnswerRequest> answers = new ArrayList<AnswerRequest>();
+	private String startDate;
 }
