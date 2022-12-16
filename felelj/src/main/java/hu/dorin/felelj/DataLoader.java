@@ -34,7 +34,6 @@ public class DataLoader implements CommandLineRunner {
     private final ChoiceRepository choiceRepository;
     private final Faker faker;
     
-
     public DataLoader( UserRepository userRepository,TestRepository testRepository , TaskRepository taskRepository, ChoiceRepository choiceRepository, AnswerRepository answerRepository,Faker faker) {
     	this.userRepository = userRepository;
         this.testRepository = testRepository;

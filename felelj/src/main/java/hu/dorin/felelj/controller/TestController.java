@@ -32,6 +32,7 @@ import hu.dorin.felelj.dto.FillingTestDTO;
 import hu.dorin.felelj.dto.TaskDTO;
 import hu.dorin.felelj.dto.TestDTO;
 import hu.dorin.felelj.dto.TestResultDTO;
+import hu.dorin.felelj.dto.TopResultsDTO;
 import hu.dorin.felelj.enums.Role;
 import hu.dorin.felelj.enums.Type;
 import hu.dorin.felelj.model.Answer;
@@ -145,6 +146,43 @@ public class TestController {
 		
 		return ftdto;
 	}
+	
+
+	@GetMapping("/starttest/results/{url}/{userId}")
+	public TopResultsDTO getTopResults(@PathVariable("url") String url, @PathVariable("userId") String userId) {
+
+		List<Test> testList = testRepository.findByUrlEquals(url);
+		if(testList.size()!=1)
+		{
+			return null;
+		}
+		Test test = testList.get(0);
+		if(!test.getIsActive())
+		{
+			return null;
+		}
+		
+		Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
+		if(!userOpt.isPresent())
+		{
+			return null;
+		}
+		
+		User user = userOpt.get();
+	
+		TopResultsDTO topResultsDTO = new TopResultsDTO();
+		
+		List<TestFill> testFillList = testFillRepository.findByTest(test);
+		for (TestFill testFill : testFillList) {
+			
+			if(testFill.getUser().equals(user)) {
+				topResultsDTO.setMyPoints(testFill.getPoint());
+			}
+		}
+		
+		return topResultsDTO;
+	}
+
 
 	@PutMapping("/starttest/{userId}/{testId}")
 	public ResponseEntity<?> settingStartTest(@PathVariable("testId") String testId,@PathVariable("userId") String userId,@RequestBody StartTestRequest request) {
