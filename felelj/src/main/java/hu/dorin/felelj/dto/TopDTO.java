@@ -9,10 +9,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TopResultsDTO {
-
-	private Integer currentPoints=-1;
-	private Integer maxPoints;
-	private List<TopDTO> topThree;
+public class TopDTO {
 	
+	private Integer points;
+	private List<String> identifiers;
 }

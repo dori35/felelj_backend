@@ -32,6 +32,7 @@ import hu.dorin.felelj.dto.FillingTestDTO;
 import hu.dorin.felelj.dto.TaskDTO;
 import hu.dorin.felelj.dto.TestDTO;
 import hu.dorin.felelj.dto.TestResultDTO;
+import hu.dorin.felelj.dto.TopDTO;
 import hu.dorin.felelj.dto.TopResultsDTO;
 import hu.dorin.felelj.enums.Role;
 import hu.dorin.felelj.enums.Type;
@@ -110,13 +111,13 @@ public class TestController {
 	
 	@GetMapping("/starttest/{url}")
 	public FillingTestDTO getStartTest(@PathVariable("url") String url) {
-		List<Test> testList = testRepository.findByUrlEquals(url);
-
-		if(testList.size()!=1)
+		Optional<Test> testOptional = testRepository.findByUrlEquals(url);
+		if(!testOptional.isPresent())
 		{
 			return null;
 		}
-		Test test = testList.get(0);
+		Test test = testOptional.get();
+		
 		if(test==null)
 		{
 			return null;
@@ -151,12 +152,12 @@ public class TestController {
 	@GetMapping("/starttest/results/{url}/{userId}")
 	public TopResultsDTO getTopResults(@PathVariable("url") String url, @PathVariable("userId") String userId) {
 
-		List<Test> testList = testRepository.findByUrlEquals(url);
-		if(testList.size()!=1)
+		Optional<Test> testOptional = testRepository.findByUrlEquals(url);
+		if(!testOptional.isPresent())
 		{
 			return null;
 		}
-		Test test = testList.get(0);
+		Test test = testOptional.get();
 		if(!test.getIsActive())
 		{
 			return null;
@@ -172,13 +173,68 @@ public class TestController {
 	
 		TopResultsDTO topResultsDTO = new TopResultsDTO();
 		
-		List<TestFill> testFillList = testFillRepository.findByTest(test);
-		for (TestFill testFill : testFillList) {
+		Integer testPoint=0;
+		for(Task task : test.getTasks())
+		{
+			testPoint+=task.getPoint();
+		}
+		
+		//try-catch
+		String startDateString = (DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").withZone(ZoneId.of("Europe/Budapest")).format(test.getStartDate().toInstant()));
+		
+		
+		Optional<TestFill> testFillOpt = testFillRepository.findByStartDateEqualsAndUser(startDateString,user);
+		if(testFillOpt.isEmpty()){
+			return null;
+		}
+		TestFill testFill = testFillOpt.get();
+		
+		topResultsDTO.setCurrentPoints(testFill.getPoint());
+		topResultsDTO.setMaxPoints(testPoint);
+		
+		
+		List<TestFill> testFillList = testFillRepository.findByStartDateEquals(startDateString);
+
+		testFillList.sort(null);
+		
+		int rank=0;
+		int lastPoint = testFillList.get(0).getPoint();
+		List<TopDTO> topDTOList =  new ArrayList<TopDTO>();
+		List<String> identifiers = new ArrayList<String>();
+		
+		for (TestFill t : testFillList) {
 			
-			if(testFill.getUser().equals(user)) {
-				topResultsDTO.setMyPoints(testFill.getPoint());
+			if(t.getPoint()==lastPoint) {
+				identifiers.add(t.getUser().getIdentifier());
+			}else {
+				topDTOList.add(new TopDTO(lastPoint,identifiers));
+				if(rank==2) {
+					break;
+				}
+				lastPoint= t.getPoint();
+				identifiers = new ArrayList<String>();
+				identifiers.add(t.getUser().getIdentifier());
+				rank++;
 			}
 		}
+		
+		if(rank<2) {
+			topDTOList.add(new TopDTO(lastPoint,identifiers));	
+		}
+		
+		topResultsDTO.setTopThree(topDTOList);
+		
+		/*if(testFill.getUser().equals(user) && testFill.getStartDate()!=null
+				&&  testFill.getStartDate().equals(startDateString)) {
+			topResultsDTO.setCurrentPoints(testFill.getPoint());
+			topResultsDTO.setMaxPoints(testPoint);
+			//top 3
+		}*/
+		if(topResultsDTO.getCurrentPoints()==-1) {
+			//something went wrong
+			return null;
+		}
+		
 		
 		return topResultsDTO;
 	}
@@ -224,7 +280,7 @@ public class TestController {
 		Date date = new Date();
 		date.setHours(hours);
 		date.setMinutes(minutes);
-		date.setSeconds(minutes);
+		date.setSeconds(0);
 		test.setStartDate(date);
 		testRepository.save(test);
 		

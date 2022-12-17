@@ -20,7 +20,7 @@ import lombok.Data;
 @Data
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-public class TestFill{
+public class TestFill implements Comparable<TestFill>{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -47,6 +47,16 @@ public class TestFill{
 		this.user = user;
 		this.startDate = startDate;
 	}
-		
 
+	@Override
+	public int compareTo(TestFill o) {
+		
+		if(this.point>o.getPoint()) {
+			return -1;
+		}
+		if(this.point<o.getPoint()) {
+			return 1;
+		}
+		return 0;
+	}
 }

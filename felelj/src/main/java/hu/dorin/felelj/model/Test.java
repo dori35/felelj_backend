@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
@@ -29,6 +30,7 @@ public class Test {
 	private String subject;
 	private Boolean random;
 	private Boolean isActive = true;
+	@Column(unique=true)
 	private String url ;
 	private Date startDate ;
 	
