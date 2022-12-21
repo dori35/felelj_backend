@@ -1,6 +1,7 @@
 package hu.dorin.felelj.dto;
 
 import java.util.Date;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,5 +20,6 @@ public class CompletedTestDTO {
 	private Integer timeFrame = 0;
 	private Integer taskNumber = 0;
 	private Integer maxPoint = 0;
+	private List<CompletedTaskDTO> tasks;
 
 }

@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +28,16 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import hu.dorin.felelj.dto.CompletedTaskDTO;
 import hu.dorin.felelj.dto.CompletedTestDTO;
+import hu.dorin.felelj.dto.FillingTaskDTO;
 import hu.dorin.felelj.dto.FillingTestDTO;
 import hu.dorin.felelj.dto.TaskDTO;
 import hu.dorin.felelj.dto.TestDTO;
 import hu.dorin.felelj.dto.TestResultDTO;
 import hu.dorin.felelj.dto.TopDTO;
 import hu.dorin.felelj.dto.TopResultsDTO;
+import hu.dorin.felelj.dto.UserResultDTO;
 import hu.dorin.felelj.enums.Role;
 import hu.dorin.felelj.enums.Type;
 import hu.dorin.felelj.model.Answer;
@@ -101,10 +105,23 @@ public class TestController {
 		{
 			testTimeFrame+=task.getTimeFrame();
 			testPoint+=task.getPoint();
+			if(task.getTaskType()==Type.ORDER_LIST) {
+				
+			}
 		}
 		ftdto.setTime(testTimeFrame);
 		ftdto.setPoint(testPoint);
 		ftdto.setTaskNumber(test.getTasks().size());
+		
+		for(FillingTaskDTO taskdto : ftdto.getTasks())
+		{
+			if(taskdto.getTaskType()==Type.ORDER_LIST) {
+				
+				Collections.shuffle(taskdto.getChoices());
+			}
+		}
+		
+		
 		
 		return ftdto;
 	}
@@ -140,6 +157,14 @@ public class TestController {
 		ftdto.setTime(testTimeFrame);
 		ftdto.setPoint(testPoint);
 		ftdto.setTaskNumber(test.getTasks().size());
+		for(FillingTaskDTO taskdto : ftdto.getTasks())
+		{
+			if(taskdto.getTaskType()==Type.ORDER_LIST) {
+				
+				Collections.shuffle(taskdto.getChoices());
+			}
+		}
+		
 		if(test.getStartDate()!=null) {
 			ftdto.setStartDate(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").withZone(ZoneId.of("Europe/Budapest")).format(test.getStartDate().toInstant()));	
 		}
@@ -208,17 +233,18 @@ public class TestController {
 				identifiers.add(t.getUser().getIdentifier());
 			}else {
 				topDTOList.add(new TopDTO(lastPoint,identifiers));
-				if(rank==2) {
-					break;
-				}
 				lastPoint= t.getPoint();
 				identifiers = new ArrayList<String>();
 				identifiers.add(t.getUser().getIdentifier());
+
 				rank++;
+				if(rank==3) {
+					break;
+				}
 			}
 		}
 		
-		if(rank<2) {
+		if(rank<3) {
 			topDTOList.add(new TopDTO(lastPoint,identifiers));	
 		}
 		
@@ -461,6 +487,11 @@ public class TestController {
 		}
 		User user = userOpt.get();
 		
+		if(user.getRole()!=Role.TEACHER)
+		{
+			return null;
+		}
+		
 		Optional<Test> testOpt = testRepository.findById(Long.parseLong(testId));		
 		if(!testOpt.isPresent())
 		{
@@ -485,24 +516,107 @@ public class TestController {
 		newTest.setCreatedBy(user);
 		testRepository.save(newTest);
 		
-		
-		//System.out.println(request.getTasks());
-		
 		List<Task> newTasks = new ArrayList<Task>();
 		Task task  = null ;
 		for (TaskDTO taskdto : request.getTasks()) {
+			
 			taskdto.setId(null);
 			task = modelMapper.map(taskdto, Task.class);
 			
 			task.setTest(newTest);  
 			newTasks.add(task);
 			taskRepository.save(task);
-			for (Choice choice : task.getChoices())
-			{
-				choice.setId(null);
-				choice.setTask(task);
+			 
+			
+			if(task.getTaskType()!=Type.TRUE_FALSE && taskdto.getChoices().size()!=4) {
+				return null;
 			}
-			choiceRepository.saveAll( task.getChoices());
+			
+			
+			if(task.getChoices()!=null) {			 
+			 
+				for (Choice choice : task.getChoices())
+				{
+					choice.setId(null);
+					choice.setTask(task);
+				}
+				choiceRepository.saveAll( task.getChoices());
+			}
+			
+			if(task.getTaskType()==Type.TRUE_FALSE) {
+				
+				if(taskdto.getSolutionTrueFalse()!=null &&  (taskdto.getSolutionTrueFalse().equals("0") || taskdto.getSolutionTrueFalse().equals("1"))) 
+				{
+					task.setSolution(taskdto.getSolutionTrueFalse());
+					
+				}else {
+					return null;
+				}
+				
+			}else if(task.getTaskType()==Type.ORDER_LIST){
+				
+
+				List<String> choiceIdList = new ArrayList<String>();
+				
+				for (Choice choice : task.getChoices()) {
+					
+					choiceIdList.add(Long.toString(choice.getId()));
+						
+				}
+				
+				task.setSolution(choiceIdList.stream().map(n -> String.valueOf(n)).collect(Collectors.joining(",")));
+				
+				
+			}else if(task.getTaskType()==Type.ONE_CHOICE){
+				if(taskdto.getSolutionOneChoice()!=null &&  (taskdto.getSolutionOneChoice().equals("0") || taskdto.getSolutionOneChoice().equals("1") 
+						|| taskdto.getSolutionOneChoice().equals("2") || taskdto.getSolutionOneChoice().equals("3")))
+				{
+					
+					
+					Choice choice = task.getChoices().get(Integer.parseInt(taskdto.getSolutionOneChoice()));
+					if(choice==null) {
+						return null;
+					}
+					Long choiceId = choice.getId();
+					task.setSolution(Long.toString(choiceId));
+					
+					
+				}else {
+					return null;
+				}
+			}else if(task.getTaskType()==Type.MULTIPLE_CHOICES) {
+				
+
+				List<String> choiceIdList = new ArrayList<String>();
+				
+				if(taskdto.getSolutionMultipleChoices()!=null){
+					for (String choiceIndexString : taskdto.getSolutionMultipleChoices()) {
+						
+						if(choiceIndexString.equals("1") || choiceIndexString.equals("1") || 
+								choiceIndexString.equals("2") || choiceIndexString.equals("3") ) {
+
+							Choice choice= task.getChoices().get(Integer.parseInt(choiceIndexString)) ;
+							if(choice==null) {
+								return null;
+							}
+							Long choiceId = choice.getId();
+							choiceIdList.add(Long.toString(choiceId));
+						}else {
+							return null;
+						}
+					}
+					
+					
+				task.setSolution(choiceIdList.stream().map(n -> String.valueOf(n)).collect(Collectors.joining(",")));
+					
+					
+				}else {
+					return null;
+				}
+			
+			}else {
+				return null;
+			}
 		}
 		
 		taskRepository.saveAll(newTasks);
@@ -523,6 +637,11 @@ public class TestController {
 		}
 		User user = userOpt.get();
 		
+		if(user.getRole()!=Role.TEACHER)
+		{
+			return null;
+		}
+		
 	
 		Test newTest = new Test( request.getTitle(),request.getSubject(), request.getRandom());
 		newTest.setCreatedBy(user);
@@ -530,19 +649,106 @@ public class TestController {
 		
 		List<Task> newTasks = new ArrayList<Task>();
 		Task task  = null ;
+		
 		for (TaskDTO taskdto : request.getTasks()) {
+			
 			taskdto.setId(null);
 			task = modelMapper.map(taskdto, Task.class);
 			
 			task.setTest(newTest);  
 			newTasks.add(task);
 			taskRepository.save(task);
-			for (Choice choice : task.getChoices())
-			{
-				choice.setId(null);
-				choice.setTask(task);
+			
+			if(task.getTaskType()!=Type.TRUE_FALSE && taskdto.getChoices().size()!=4) {
+				return null;
 			}
-			choiceRepository.saveAll( task.getChoices());
+			
+			
+			if(task.getChoices()!=null) {			 
+			 
+				for (Choice choice : task.getChoices())
+				{
+					choice.setId(null);
+					choice.setTask(task);
+				}
+				choiceRepository.saveAll( task.getChoices());
+			}
+			
+
+			if(task.getTaskType()==Type.TRUE_FALSE) {
+				
+				if(taskdto.getSolutionTrueFalse()!=null &&  (taskdto.getSolutionTrueFalse().equals("0") || taskdto.getSolutionTrueFalse().equals("1"))) 
+				{
+					task.setSolution(taskdto.getSolutionTrueFalse());
+					
+				}else {
+					return null;
+				}
+				
+			}else if(task.getTaskType()==Type.ORDER_LIST){
+				
+
+				List<String> choiceIdList = new ArrayList<String>();
+				
+				for (Choice choice : task.getChoices()) {
+					
+					choiceIdList.add(Long.toString(choice.getId()));
+						
+				}
+				
+				task.setSolution(choiceIdList.stream().map(n -> String.valueOf(n)).collect(Collectors.joining(",")));
+				
+				
+			}else if(task.getTaskType()==Type.ONE_CHOICE){
+				if(taskdto.getSolutionOneChoice()!=null &&  (taskdto.getSolutionOneChoice().equals("0") || taskdto.getSolutionOneChoice().equals("1") 
+						|| taskdto.getSolutionOneChoice().equals("2") || taskdto.getSolutionOneChoice().equals("3")))
+				{
+					
+					
+					Choice choice = task.getChoices().get(Integer.parseInt(taskdto.getSolutionOneChoice()));
+					if(choice==null) {
+						return null;
+					}
+					Long choiceId = choice.getId();
+					task.setSolution(Long.toString(choiceId));
+					
+					
+				}else {
+					return null;
+				}
+			}else if(task.getTaskType()==Type.MULTIPLE_CHOICES) {
+				
+
+				List<String> choiceIdList = new ArrayList<String>();
+				
+				if(taskdto.getSolutionMultipleChoices()!=null){
+					for (String choiceIndexString : taskdto.getSolutionMultipleChoices()) {
+						
+						if(choiceIndexString.equals("1") || choiceIndexString.equals("1") || 
+								choiceIndexString.equals("2") || choiceIndexString.equals("3") ) {
+
+							Choice choice= task.getChoices().get(Integer.parseInt(choiceIndexString)) ;
+							if(choice==null) {
+								return null;
+							}
+							Long choiceId = choice.getId();
+							choiceIdList.add(Long.toString(choiceId));
+						}else {
+							return null;
+						}
+					}
+					
+					
+				task.setSolution(choiceIdList.stream().map(n -> String.valueOf(n)).collect(Collectors.joining(",")));
+					
+					
+				}else {
+					return null;
+				}
+			
+			}else {
+				return null;
+			}
 		}
 		
 		taskRepository.saveAll(newTasks);
@@ -563,6 +769,7 @@ public class TestController {
 		
 		List<TestFill> testFillList = testFillRepository.findByUser(user);
 		
+		
 		List<CompletedTestDTO> dtoList = new ArrayList<CompletedTestDTO>(); 
 		testFillList.sort(Comparator.comparing(o -> o.getFillDate()));
 		Collections.reverse(testFillList);
@@ -570,17 +777,56 @@ public class TestController {
 			Test test = testFill.getTest();
 			CompletedTestDTO completedTestDto = modelMapper.map(test, CompletedTestDTO.class);
 			completedTestDto.setCurrentPoint(testFill.getPoint());
+			
 			Integer testTimeFrame=0;
 			Integer testPoint=0;
+			List<CompletedTaskDTO> completedTasksList = new ArrayList<CompletedTaskDTO>(); 
 			for(Task task : test.getTasks())
 			{
 				testTimeFrame+=task.getTimeFrame();
 				testPoint+=task.getPoint();
+
+				CompletedTaskDTO completedTaskDTO  = modelMapper.map(task, CompletedTaskDTO.class);
+
+				Answer answer = new Answer();
+				for (Answer a : testFill.getAnswers()) {
+					if(a.getTask().equals(task))
+					{
+						answer=a;
+					}
+				}
+				
+				int currentPoint = 0;
+				if(task.getTaskType()==Type.MULTIPLE_CHOICES) {
+					List<String> listOfGoodAnswers =  Arrays.asList(task.getSolution().split(","));
+					List<String> listOfUserAnswers =  Arrays.asList(answer.getAnswer().split(","));
+					
+					Collections.sort(listOfGoodAnswers);
+					Collections.sort(listOfUserAnswers);
+					
+					if( Objects.equals(listOfGoodAnswers,listOfUserAnswers)){
+						currentPoint=task.getPoint();
+					}
+					
+				}else {
+					if(task.getSolution().equals(answer.getAnswer())) {
+						currentPoint = task.getPoint();
+					}
+				}
+				
+				completedTaskDTO.setCurrentPoint(currentPoint);
+				completedTaskDTO.setAnswer(answer.getAnswer()) ;
+				completedTasksList.add(completedTaskDTO);
+				
 			}
 			completedTestDto.setMaxPoint(testPoint);
 			completedTestDto.setTimeFrame(testTimeFrame);
-			completedTestDto.setFillDate(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").withZone(ZoneId.of("Europe/Budapest")).format(testFill.getFillDate()));
+			completedTestDto.setFillDate(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").withZone(ZoneId.of("Europe/Budapest")).format(testFill.getFillDate()));	
 			completedTestDto.setTaskNumber(test.getTasks().size());	
+			completedTestDto.setTasks(completedTasksList);
+
+		
+			
 			dtoList.add(completedTestDto);
 		}
 		return dtoList;
@@ -642,7 +888,6 @@ public class TestController {
         }
         
         List<TestResultDTO> testResultDTOList = new ArrayList<TestResultDTO>();
-        
         for (Entry<String, List<TestFill>> entry : filledByMinute.entrySet()) {
             
             double avgPoint = entry.getValue().stream().
@@ -650,9 +895,64 @@ public class TestController {
             int bestPoint = entry.getValue().stream().mapToInt(TestFill::getPoint).max().orElse(0);
             int lestPoint = entry.getValue().stream().mapToInt(TestFill::getPoint).min().orElse(0);
             int fillersNumber = entry.getValue().size();
-         
+
+            List<UserResultDTO> userResultDTOList= new  ArrayList<UserResultDTO>();
+            for (TestFill testFill : entry.getValue()) {
+
+                UserResultDTO userResultDTO= new UserResultDTO();
+
+                userResultDTO.setUserId( testFill.getUser().getId());
+                userResultDTO.setIdentifier( testFill.getUser().getIdentifier());
+                userResultDTO.setPoints(testFill.getPoint());
+             
+
+				Answer answer = new Answer() ;
+
+	    		List<CompletedTaskDTO> completedTasksList= new ArrayList<CompletedTaskDTO>();
+				CompletedTaskDTO completedTaskDTO = new CompletedTaskDTO();
+				int currentPoint = 0;
+				for(Task task: test.getTasks()) {
+					
+
+					completedTaskDTO  = modelMapper.map(task, CompletedTaskDTO.class);
+					
+					
+					for (Answer a : testFill.getAnswers()) {
+						if(a.getTask().equals(task))
+						{
+							answer=a;
+						}
+					}
+					currentPoint = 0;
+					if(task.getTaskType()==Type.MULTIPLE_CHOICES) {
+						List<String> listOfGoodAnswers =  Arrays.asList(task.getSolution().split(","));
+						List<String> listOfUserAnswers =  Arrays.asList(answer.getAnswer().split(","));
+						
+						Collections.sort(listOfGoodAnswers);
+						Collections.sort(listOfUserAnswers);
+						
+						if( Objects.equals(listOfGoodAnswers,listOfUserAnswers)){
+							currentPoint=task.getPoint();
+						}
+						
+					}else {
+						if(task.getSolution().equals(answer.getAnswer())) {
+							currentPoint = task.getPoint();
+						}
+					}
+				
+					completedTaskDTO.setCurrentPoint(currentPoint);
+					completedTaskDTO.setAnswer(answer.getAnswer()) ;
+				
+
+				completedTasksList.add(completedTaskDTO);
+				}
+
+				userResultDTO.setTasks(completedTasksList);
+	            userResultDTOList.add(userResultDTO);
             
-            testResultDTOList.add(new TestResultDTO(entry.getKey(), avgPoint, bestPoint,lestPoint,fillersNumber,test.getId(),test.getTitle(),test.getSubject(),test.getRandom(),testTimeFrame,testPoint,taskNumber));
+        	}
+            testResultDTOList.add(new TestResultDTO(entry.getKey(), avgPoint, bestPoint,lestPoint,fillersNumber,test.getId(),test.getTitle(),test.getSubject(),test.getRandom(),testTimeFrame,testPoint,taskNumber,userResultDTOList));
         }
         
         return testResultDTOList;

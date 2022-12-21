@@ -31,7 +31,7 @@ public class TestResultDTO {
 	
 	public TestResultDTO( String startDate,
 			double averagePoint,Integer bestPoint ,Integer leastPoint, Integer fillersNumber ,
-			Long testId, String title,String subject, Boolean random,Integer timeFrame, Integer maxPoint,Integer taskNumber )
+			Long testId, String title,String subject, Boolean random,Integer timeFrame, Integer maxPoint,Integer taskNumber , List<UserResultDTO> fillers)
 	{
 		this.startDate = startDate;
 		this.averagePoint = averagePoint;
@@ -45,6 +45,7 @@ public class TestResultDTO {
 		this.timeFrame =timeFrame;
 		this.taskNumber =taskNumber;
 		this.maxPoint =maxPoint;
+		this.fillers= fillers;
 	}
 
 

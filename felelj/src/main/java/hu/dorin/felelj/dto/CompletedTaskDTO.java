@@ -2,7 +2,6 @@ package hu.dorin.felelj.dto;
 
 import java.util.List;
 
-
 import hu.dorin.felelj.enums.Type;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,17 +10,16 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskDTO {
-	
+public class CompletedTaskDTO {
+
 	private Long id;
 	private String text;
 	private Type taskType ;
 	private Integer timeFrame;
 	private Integer point;
 	private String solution;
-	private String solutionTrueFalse; 
-	private String solutionOneChoice;
-	private List<String> solutionMultipleChoices;
 	private List<ChoiceDTO> choices;
+	private String answer;
+	private Integer currentPoint;
 
 }
