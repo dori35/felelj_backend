@@ -28,7 +28,7 @@ import hu.dorin.felelj.repository.TaskRepository;
 import hu.dorin.felelj.repository.TestRepository;
 import hu.dorin.felelj.repository.UserRepository;
 
-@Component
+
 public class DataLoader implements CommandLineRunner {
     private final UserRepository userRepository;
     private final TestRepository testRepository;
@@ -59,7 +59,7 @@ public class DataLoader implements CommandLineRunner {
                         faker.name().fullName(),
                         passwordEncoder.encode("1234"),
                         faker.internet().emailAddress(),
-                        faker.lorem().characters(6, false, true),
+                        "user"+i,
                         Role.values()[random.nextInt(Role.values().length)])
                 ).collect(Collectors.toList());
 
@@ -74,8 +74,8 @@ public class DataLoader implements CommandLineRunner {
      // create 30 rows of fake test
      List<Test> tests = IntStream.rangeClosed(1,30)
              .mapToObj(i -> new Test(
-                     faker.name().title(),
-                     faker.lorem().word(),
+                     "Teszt"+i,
+                     "Tantárgy"+i,
                      faker.random().nextBoolean())
              ).collect(Collectors.toList());
      

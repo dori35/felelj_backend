@@ -509,6 +509,18 @@ public class TestController {
 			return null;
 		}
 			
+
+		if(request.getTitle().length()<=0 || request.getTitle().length()>20) {
+	
+			return null;
+		}
+		
+		if(request.getSubject().length()<=0 || request.getSubject().length()>20) {
+			
+			return null;
+		}
+			
+		
 		test.setIsActive(false);
 		testRepository.save(test);
 		
@@ -519,6 +531,13 @@ public class TestController {
 		List<Task> newTasks = new ArrayList<Task>();
 		Task task  = null ;
 		for (TaskDTO taskdto : request.getTasks()) {
+			
+			
+			if(taskdto.getText().length()<=0  || taskdto.getText().length()>200) {
+				
+				return null;
+			}
+			
 			
 			taskdto.setId(null);
 			task = modelMapper.map(taskdto, Task.class);
@@ -642,6 +661,17 @@ public class TestController {
 			return null;
 		}
 		
+
+		if(request.getTitle().length()<=0 || request.getTitle().length()>20) {
+	
+			return null;
+		}
+		
+		if(request.getSubject().length()<=0 || request.getSubject().length()>20) {
+			
+			return null;
+		}
+		
 	
 		Test newTest = new Test( request.getTitle(),request.getSubject(), request.getRandom());
 		newTest.setCreatedBy(user);
@@ -652,6 +682,11 @@ public class TestController {
 		
 		for (TaskDTO taskdto : request.getTasks()) {
 			
+			if(taskdto.getText().length()<=0  || taskdto.getText().length()>200) {
+				
+				return null;
+			}
+
 			taskdto.setId(null);
 			task = modelMapper.map(taskdto, Task.class);
 			
