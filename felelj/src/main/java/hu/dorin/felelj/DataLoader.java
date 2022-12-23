@@ -153,8 +153,12 @@ public class DataLoader implements CommandLineRunner {
         		  taskForChoice.setSolution( String.valueOf(choices.get(i*4+random.nextInt(4)).getId()));
         	 }else if(taskForChoice.getTaskType()==Type.MULTIPLE_CHOICES)
         	 {
-        		 r = random.nextInt(1,4);
+        		 r = random.nextInt(4);
         		 switch (r) {
+        		 case 0:
+ 					Collections.shuffle(list);
+ 					taskForChoice.setSolution( String.valueOf(choices.get(i*4+random.nextInt(4)).getId()));
+ 					break;
 				case 1:
 					Collections.shuffle(list);
 					taskForChoice.setSolution( choices.get(i*4+list.get(0)).getId()+ ","+ choices.get(i*4+list.get(1)).getId());
