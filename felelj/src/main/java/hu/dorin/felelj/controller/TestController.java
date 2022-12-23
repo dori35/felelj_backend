@@ -1,7 +1,5 @@
 package hu.dorin.felelj.controller;
 
-import java.time.LocalDateTime;
-import java.time.Month;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -546,7 +544,7 @@ public class TestController {
 			newTasks.add(task);
 			taskRepository.save(task);
 			 
-			
+
 			if(task.getTaskType()!=Type.TRUE_FALSE && taskdto.getChoices().size()!=4) {
 				return null;
 			}
@@ -556,12 +554,19 @@ public class TestController {
 			 
 				for (Choice choice : task.getChoices())
 				{
+					if(choice.getText()==null ) {
+						return null;
+					}else if(choice.getText().length()<=0 || choice.getText().length()>20) {
+						return null;	
+					}
+					
 					choice.setId(null);
 					choice.setTask(task);
 				}
 				choiceRepository.saveAll( task.getChoices());
 			}
-			
+
+		
 			if(task.getTaskType()==Type.TRUE_FALSE) {
 				
 				if(taskdto.getSolutionTrueFalse()!=null &&  (taskdto.getSolutionTrueFalse().equals("0") || taskdto.getSolutionTrueFalse().equals("1"))) 
@@ -611,7 +616,7 @@ public class TestController {
 				if(taskdto.getSolutionMultipleChoices()!=null){
 					for (String choiceIndexString : taskdto.getSolutionMultipleChoices()) {
 						
-						if(choiceIndexString.equals("1") || choiceIndexString.equals("1") || 
+						if(choiceIndexString.equals("0") || choiceIndexString.equals("1") || 
 								choiceIndexString.equals("2") || choiceIndexString.equals("3") ) {
 
 							Choice choice= task.getChoices().get(Integer.parseInt(choiceIndexString)) ;
@@ -624,7 +629,6 @@ public class TestController {
 							return null;
 						}
 					}
-					
 					
 				task.setSolution(choiceIdList.stream().map(n -> String.valueOf(n)).collect(Collectors.joining(",")));
 					
@@ -703,6 +707,12 @@ public class TestController {
 			 
 				for (Choice choice : task.getChoices())
 				{
+					
+					if(choice.getText()==null ) {
+						return null;
+					}else if(choice.getText().length()<=0 || choice.getText().length()>20) {
+						return null;	
+					}
 					choice.setId(null);
 					choice.setTask(task);
 				}
@@ -759,7 +769,7 @@ public class TestController {
 				if(taskdto.getSolutionMultipleChoices()!=null){
 					for (String choiceIndexString : taskdto.getSolutionMultipleChoices()) {
 						
-						if(choiceIndexString.equals("1") || choiceIndexString.equals("1") || 
+						if(choiceIndexString.equals("0") || choiceIndexString.equals("1") || 
 								choiceIndexString.equals("2") || choiceIndexString.equals("3") ) {
 
 							Choice choice= task.getChoices().get(Integer.parseInt(choiceIndexString)) ;
