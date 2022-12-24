@@ -18,6 +18,7 @@ import hu.dorin.felelj.dto.UserDTO;
 import hu.dorin.felelj.enums.Role;
 import hu.dorin.felelj.model.User;
 import hu.dorin.felelj.repository.UserRepository;
+import net.minidev.json.JSONObject;
 
 
 @RestController
@@ -34,10 +35,12 @@ public class UserController {
 	public ResponseEntity<?> getUser(@PathVariable("id") Long id) {
 		Optional<User> userOpt = userRepository.findById(id);
 		List<Role> rolesList = new ArrayList<Role>();
+		JSONObject jsonObj = new JSONObject();
 		
 		if(!userOpt.isPresent())
 		{
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		User user = userOpt.get();
@@ -48,7 +51,8 @@ public class UserController {
 		}else if(user.getRole()== Role.STUDENT ){ 
 			rolesList.add(Role.STUDENT);
 		}else {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			jsonObj.put("error","invalid role" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		UserDTO userdto = modelMapper.map(user, UserDTO.class);
@@ -61,10 +65,12 @@ public class UserController {
 	public ResponseEntity<?> getLoginUser(@PathVariable("identifier") String identifier) {
 		Optional<User> userOpt = userRepository.findByIdentifier(identifier);
 		List<Role> rolesList = new ArrayList<Role>();
+		JSONObject jsonObj = new JSONObject();
 		
 		if(!userOpt.isPresent())
 		{
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		User user = userOpt.get();
@@ -76,7 +82,8 @@ public class UserController {
 		}else if(user.getRole()== Role.STUDENT ){ 
 			rolesList.add(Role.STUDENT);
 		}else {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			jsonObj.put("error","invalid role" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		LoginUserDTO loginUserDTO = new LoginUserDTO(user.getId(),user.getIdentifier(),rolesList);

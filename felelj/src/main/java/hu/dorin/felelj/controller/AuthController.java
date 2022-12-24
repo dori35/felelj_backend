@@ -58,9 +58,11 @@ public class AuthController {
 				.collect(Collectors.toList());
 
 		Optional<User> userOpt = userRepository.findByIdentifier(userDetails.getUsername());
+		JSONObject jsonObj = new JSONObject();
 		if(!userOpt.isPresent())
 		{
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.UNAUTHORIZED);
 		}
 		
 		User user = userOpt.get();
@@ -73,41 +75,41 @@ public class AuthController {
 		JSONObject jsonObj = new JSONObject();
 		if(request.getName().isEmpty() || request.getName().isBlank())
 		{
-			jsonObj.put("text","empty name" );
+			jsonObj.put("error","empty name" );
 			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		
 		if( request.getPassword().length()<4) {
-			jsonObj.put("text","short password" );
+			jsonObj.put("error","short password" );
 			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}else if(request.getPassword().equals(request.getPassword().toUpperCase())) {
-			jsonObj.put("text","password must contain lowercase letter" );
+			jsonObj.put("error","password must contain lowercase letter" );
 			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		} 
 		else if(request.getPassword().equals(request.getPassword().toLowerCase()) ) {
-			jsonObj.put("text","password must contain uppercase letter" );
+			jsonObj.put("error","password must contain uppercase letter" );
 			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		else if(!request.getPassword().matches(".*\\d.*")){
-			jsonObj.put("text","password must contain numbers" );
+			jsonObj.put("error","password must contain numbers" );
 			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		
 		if(request.getIdentifier().trim().length() != 6)
 		{
-			jsonObj.put("text","identifier must be 6 character" );
+			jsonObj.put("error","identifier must be 6 character" );
 			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		
 		if( !(request.getRole().equals(Role.STUDENT.toString()) || request.getRole().equals( Role.TEACHER.toString())) )
 		{
-			jsonObj.put("text","invalid role" );
+			jsonObj.put("error","invalid role" );
 			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		
 		if(!request.getEmail().matches("^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-z]{2,6}$"))
 		{
-			jsonObj.put("text","invalid email" );
+			jsonObj.put("error","invalid email" );
 			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 	
@@ -115,12 +117,13 @@ public class AuthController {
 		Optional<User> userOpt = userRepository.findByIdentifier(request.getIdentifier());
 		if(userOpt.isPresent())
 		{
-			return new ResponseEntity<>(HttpStatus.CONFLICT);
+			jsonObj.put("error","user exists" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.CONFLICT);
 		}
 		
 		User user = new User(request.getName(), passwordEncoder.encode( request.getPassword()), request.getEmail(), request.getIdentifier(),Role.valueOf( request.getRole())) ;
 		userRepository.save(user);
-		jsonObj.put("text","success registration" );
+		jsonObj.put("text","successful registration" );
 		return new ResponseEntity<>(jsonObj,HttpStatus.OK);
 		
 	}

@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -125,23 +126,33 @@ public class TestController {
 	}
 	
 	@GetMapping("/starttest/{url}")
-	public FillingTestDTO getStartTest(@PathVariable("url") String url) {
+	public ResponseEntity<?> getStartTest(@PathVariable("url") String url) {
 		Optional<Test> testOptional = testRepository.findByUrlEquals(url);
+		JSONObject jsonObj = new JSONObject();
 		if(!testOptional.isPresent())
 		{
-			return null;
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		Test test = testOptional.get();
 		
 		if(test==null)
 		{
-			return null;
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		
 		if(!test.getIsActive())
 		{
-			return null;
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
+		}
+		
+		if(test.getTasks().size()<1)
+		{
+			jsonObj.put("error","task number invalid" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		FillingTestDTO ftdto = modelMapper.map(test, FillingTestDTO.class);
@@ -167,9 +178,8 @@ public class TestController {
 			ftdto.setStartDate(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").withZone(ZoneId.of("Europe/Budapest")).format(test.getStartDate().toInstant()));	
 		}
 		
-		
-		return ftdto;
-	}
+		return new ResponseEntity<>(ftdto,HttpStatus.OK);
+		}
 	
 
 	@GetMapping("/starttest/results/{url}/{userId}")
