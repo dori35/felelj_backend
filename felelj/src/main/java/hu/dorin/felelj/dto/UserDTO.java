@@ -13,5 +13,4 @@ public class UserDTO {
 	private String email;
 	private String identifier;
 	private Role role;
-	//private List<TestDTO> completedTests;
 }

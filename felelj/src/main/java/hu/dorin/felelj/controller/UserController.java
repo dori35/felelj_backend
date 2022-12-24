@@ -7,6 +7,8 @@ import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,43 +31,56 @@ public class UserController {
 	
 	
 	@GetMapping("/userdtos/{id}")
-	public UserDTO getUser(@PathVariable("id") Long id) {
-		Optional<User> user = userRepository.findById(id);
+	public ResponseEntity<?> getUser(@PathVariable("id") Long id) {
+		Optional<User> userOpt = userRepository.findById(id);
 		List<Role> rolesList = new ArrayList<Role>();
 		
-		if(!user.isPresent())
+		if(!userOpt.isPresent())
 		{
-			return null;
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		
+		User user = userOpt.get();
 		
-		if(user.get().getRole()== Role.TEACHER ) {
+		if(user.getRole()== Role.TEACHER ) {
 			rolesList.add(Role.TEACHER);
 			rolesList.add(Role.STUDENT);
-		}else{ 
+		}else if(user.getRole()== Role.STUDENT ){ 
 			rolesList.add(Role.STUDENT);
+		}else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		
-		UserDTO userdto = modelMapper.map(user.get(), UserDTO.class);
-		return userdto;
+		UserDTO userdto = modelMapper.map(user, UserDTO.class);
+		return new ResponseEntity<>(userdto,HttpStatus.OK);
 	}
 	
 
 	
 	@GetMapping("/login/users/{identifier}")
-	public LoginUserDTO getLoginUser(@PathVariable("identifier") String identifier) {
-		User u = userRepository.findByIdentifier(identifier);
-	
+	public ResponseEntity<?> getLoginUser(@PathVariable("identifier") String identifier) {
+		Optional<User> userOpt = userRepository.findByIdentifier(identifier);
 		List<Role> rolesList = new ArrayList<Role>();
-		if(u.getRole()== Role.TEACHER ) {
-			rolesList.add(Role.TEACHER);
-			rolesList.add(Role.STUDENT);
-		}else{ 
-			rolesList.add(Role.STUDENT);
+		
+		if(!userOpt.isPresent())
+		{
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		
-		LoginUserDTO loginUserDTO = new LoginUserDTO(u.getId(),u.getIdentifier(), rolesList );
-		return loginUserDTO;
+		User user = userOpt.get();
+		
+		
+		if(user.getRole()== Role.TEACHER ) {
+			rolesList.add(Role.TEACHER);
+			rolesList.add(Role.STUDENT);
+		}else if(user.getRole()== Role.STUDENT ){ 
+			rolesList.add(Role.STUDENT);
+		}else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		LoginUserDTO loginUserDTO = new LoginUserDTO(user.getId(),user.getIdentifier(),rolesList);
+		return new ResponseEntity<>(loginUserDTO,HttpStatus.OK);
 	}
 	
 	

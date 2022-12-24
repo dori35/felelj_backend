@@ -1,9 +1,11 @@
 package hu.dorin.felelj.controller;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +25,7 @@ import hu.dorin.felelj.security.JwtUtils;
 import hu.dorin.felelj.security.LoginRequest;
 import hu.dorin.felelj.security.LoginResponse;
 import hu.dorin.felelj.security.SignUpRequest;
+import net.minidev.json.JSONObject;
 
 
 @RestController
@@ -47,59 +50,78 @@ public class AuthController {
 		Authentication authentication = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(loginRequest.getIdentifier(), loginRequest.getPassword()));
 		
-		//SecurityContextHolder.getContext().setAuthentication(authentication);
 		String jwt = jwtUtils.generateJwtToken(authentication);
 		
 		UserDetails userDetails = (UserDetails) authentication.getPrincipal();		
 		List<String> roles = userDetails.getAuthorities().stream()
 				.map(item -> item.getAuthority())
 				.collect(Collectors.toList());
+
+		Optional<User> userOpt = userRepository.findByIdentifier(userDetails.getUsername());
+		if(!userOpt.isPresent())
+		{
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
 		
+		User user = userOpt.get();
 		
-		return ResponseEntity.ok(new JwtResponse(userRepository.findByIdentifier(userDetails.getUsername()).getId(),jwt, 
-												 userDetails.getUsername(), 
-												 roles));
+		return ResponseEntity.ok(new JwtResponse(user.getId(),jwt,userDetails.getUsername(),roles));
 	}
 	
 	@PostMapping("/signup")
 	public ResponseEntity<?> processRegisterUser(@RequestBody SignUpRequest request) {
-		
-
-		if(request.getName().isEmpty())
+		JSONObject jsonObj = new JSONObject();
+		if(request.getName().isEmpty() || request.getName().isBlank())
 		{
-			return ResponseEntity.ok(new LoginResponse("empty name"));
+			jsonObj.put("text","empty name" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		
 		if( request.getPassword().length()<4) {
-			return ResponseEntity.ok(new LoginResponse("short password"));
+			jsonObj.put("text","short password" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}else if(request.getPassword().equals(request.getPassword().toUpperCase())) {
-			return ResponseEntity.ok(new LoginResponse("password must contain lowercase letter"));
+			jsonObj.put("text","password must contain lowercase letter" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		} 
 		else if(request.getPassword().equals(request.getPassword().toLowerCase()) ) {
-			return ResponseEntity.ok(new LoginResponse("password must contain uppercase letter"));
+			jsonObj.put("text","password must contain uppercase letter" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		else if(!request.getPassword().matches(".*\\d.*")){
-			return ResponseEntity.ok(new LoginResponse("password must contain numbers"));
+			jsonObj.put("text","password must contain numbers" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		
-		if(request.getIdentifier().length() != 6)
+		if(request.getIdentifier().trim().length() != 6)
 		{
-			return ResponseEntity.ok(new LoginResponse("identifier must be 6 character"));
+			jsonObj.put("text","identifier must be 6 character" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		
 		if( !(request.getRole().equals(Role.STUDENT.toString()) || request.getRole().equals( Role.TEACHER.toString())) )
 		{
-			return ResponseEntity.ok(new LoginResponse("invalid role"));
+			jsonObj.put("text","invalid role" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		
 		if(!request.getEmail().matches("^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-z]{2,6}$"))
 		{
-			return ResponseEntity.ok(new LoginResponse("invalid email"));
+			jsonObj.put("text","invalid email" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 	
+		
+		Optional<User> userOpt = userRepository.findByIdentifier(request.getIdentifier());
+		if(userOpt.isPresent())
+		{
+			return new ResponseEntity<>(HttpStatus.CONFLICT);
+		}
+		
 		User user = new User(request.getName(), passwordEncoder.encode( request.getPassword()), request.getEmail(), request.getIdentifier(),Role.valueOf( request.getRole())) ;
 		userRepository.save(user);
-		return ResponseEntity.ok(new LoginResponse("success registration"));
+		jsonObj.put("text","success registration" );
+		return new ResponseEntity<>(jsonObj,HttpStatus.OK);
 		
 	}
 	
