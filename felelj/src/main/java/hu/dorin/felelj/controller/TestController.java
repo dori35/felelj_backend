@@ -82,19 +82,42 @@ public class TestController {
 	private ModelMapper modelMapper;
 	
 	
-	@GetMapping("/fillingtestdtos/{testId}")
-	public FillingTestDTO getFillingTest(@PathVariable("testId") String testId) {
+	@GetMapping("/fillingtestdtos/{testId}/{userId}")
+	public ResponseEntity<?> getFillingTest(@PathVariable("testId") String testId,@PathVariable("userId") String userId) {
 		Optional<Test> testOpt = testRepository.findById(Long.parseLong(testId));
+		Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
+		JSONObject jsonObj = new JSONObject();
 		if(!testOpt.isPresent())
 		{
-			return null;
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
+		}
+		
+		if(!userOpt.isPresent())
+		{
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		Test test = testOpt.get();
+		User user = userOpt.get();
 		
+		if(!user.equals(test.getCreatedBy())){
+		
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
+		}
+			
 		if(!test.getIsActive())
 		{
-			return null;
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
+		}
+		
+		if(test.getTasks().size()<1)
+		{
+			jsonObj.put("error","task number invalid" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		FillingTestDTO ftdto = modelMapper.map(test, FillingTestDTO.class);
@@ -120,28 +143,22 @@ public class TestController {
 			}
 		}
 		
-		
-		
-		return ftdto;
+		return new ResponseEntity<>(ftdto,HttpStatus.OK);
 	}
 	
 	@GetMapping("/starttest/{url}")
 	public ResponseEntity<?> getStartTest(@PathVariable("url") String url) {
-		Optional<Test> testOptional = testRepository.findByUrlEquals(url);
+		Optional<Test> testOpt = testRepository.findByUrlEquals(url);
 		JSONObject jsonObj = new JSONObject();
-		if(!testOptional.isPresent())
-		{
-			jsonObj.put("error","test not found" );
-			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
-		}
-		Test test = testOptional.get();
 		
-		if(test==null)
+		if(!testOpt.isPresent())
 		{
 			jsonObj.put("error","test not found" );
 			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
+		
+		Test test = testOpt.get();
 		
 		if(!test.getIsActive())
 		{
@@ -277,29 +294,40 @@ public class TestController {
 	@PutMapping("/starttest/{userId}/{testId}")
 	public ResponseEntity<?> settingStartTest(@PathVariable("testId") String testId,@PathVariable("userId") String userId,@RequestBody StartTestRequest request) {
 		Optional<Test> testOpt = testRepository.findById(Long.parseLong(testId));
+		JSONObject jsonObj = new JSONObject();
+		
 		if(!testOpt.isPresent())
 		{
-			return null;
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		Test test = testOpt.get();
 		if(!test.getIsActive())
 		{
-			return null;
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
 		if(!userOpt.isPresent())
 		{
-			return null;
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		User user = userOpt.get();
 		if(user.getRole()!=Role.TEACHER)
 		{
-			return null;
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
+		if(!user.equals(test.getCreatedBy())) {
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
+		}
+			
 		test.setUrl(request.getUrl());
 		
 		Integer hours =0;
@@ -308,7 +336,8 @@ public class TestController {
 			 hours = Integer.parseInt(request.getStartTime().substring(0, 2));
 			 minutes =  Integer.parseInt(request.getStartTime().substring(3, 5));
 	    }catch (NumberFormatException ex){
-	         return null;
+	    	jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 	    }
 		
 		Date date = new Date();
@@ -318,7 +347,6 @@ public class TestController {
 		test.setStartDate(date);
 		testRepository.save(test);
 		
-		JSONObject jsonObj = new JSONObject();
 		jsonObj.put("text","successful startTest" );
 		return ResponseEntity.ok(jsonObj);
 	}
@@ -407,17 +435,22 @@ public class TestController {
 	
 
 	@GetMapping("/createdtestdtos/{userId}")
-	public List<TestDTO> getCreatedTests(@PathVariable("userId") String userId) {
+	public ResponseEntity<?> getCreatedTests(@PathVariable("userId") String userId) {
 		Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));
 		List<TestDTO> testDtoList = new ArrayList<>();
+		JSONObject jsonObj = new JSONObject();
+		
 		if(!userOpt.isPresent())
 		{
-			return testDtoList;
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
+		
 		User user = userOpt.get(); 
 		if(user.getRole()!=Role.TEACHER)
 		{
-			return null;
+			jsonObj.put("error","tests not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		List<Test> testList =  user.getCreatedTests();
 		testList.sort(Comparator.comparing(o -> o.getCreatedDate()));
@@ -439,93 +472,105 @@ public class TestController {
 			    testDtoList.add(tdto);
 			}
 		}
-		return testDtoList;
+		return new ResponseEntity<>(testDtoList,HttpStatus.OK);
 	}
 	
 	
 
 	@DeleteMapping("/createdtestdtos/{userId}/{testId}")
 	public ResponseEntity<?> deleteCreatedTest(@PathVariable("userId") String userId, @PathVariable("testId") String testId) {
-		
+		Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));	
 		JSONObject jsonObj = new JSONObject();
 		
-		Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));		
 		if(!userOpt.isPresent())
 		{
-			jsonObj.put("text","invalid user" );
-			return ResponseEntity.ok(jsonObj);
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		User user = userOpt.get();
 		
 		Optional<Test> testOpt = testRepository.findById(Long.parseLong(testId));		
 		if(!testOpt.isPresent())
 		{
-			jsonObj.put("text","invalid test" );
-			return ResponseEntity.ok(jsonObj);
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		Test test = testOpt.get();
 	
 		if(!test.getIsActive())
 		{
-			jsonObj.put("text","invalid test" );
-			return ResponseEntity.ok(jsonObj);
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		if(	!user.equals(test.getCreatedBy())) {
 	
-			jsonObj.put("text","forbidden delete" );
-			return ResponseEntity.ok(jsonObj);
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 			
 	   test.setIsActive(false);
 	   testRepository.save(test);
 	   
 	   jsonObj.put("text","successful deleted test" );
-	   return ResponseEntity.ok(jsonObj);
+	   return new ResponseEntity<>(jsonObj,HttpStatus.OK);
 	
    }
 	
 	@PostMapping("/createdtestdtos/{userId}/{testId}")
-	public TestDTO modifyCreatedTest(@PathVariable("userId") String userId, @PathVariable("testId") String testId, @RequestBody TestRequest request) {
-		
+	public ResponseEntity<?> modifyCreatedTest(@PathVariable("userId") String userId, @PathVariable("testId") String testId, @RequestBody TestRequest request) {
 		Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));		
+		JSONObject jsonObj = new JSONObject();
+		
 		if(!userOpt.isPresent())
 		{
-			return null;
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
+		
 		User user = userOpt.get();
 		
 		if(user.getRole()!=Role.TEACHER)
 		{
-			return null;
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		Optional<Test> testOpt = testRepository.findById(Long.parseLong(testId));		
 		if(!testOpt.isPresent())
 		{
-			return null;
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
+		
 		Test test = testOpt.get();
+		/*Test saveTest = modelMapper.map(test, Test.class);*/
+		
+		
 		if(!test.getIsActive())
 		{
-			return null;
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 	
 		if(	!user.equals(test.getCreatedBy())) {
 	
-			return null;
+			jsonObj.put("error","test not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 			
 
 		if(request.getTitle().length()<=0 || request.getTitle().length()>20) {
 	
-			return null;
+			jsonObj.put("error","invalid title" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		
 		if(request.getSubject().length()<=0 || request.getSubject().length()>20) {
 			
-			return null;
+			jsonObj.put("error","invalid subject" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 			
 		
@@ -540,10 +585,22 @@ public class TestController {
 		Task task  = null ;
 		for (TaskDTO taskdto : request.getTasks()) {
 			
+		
+			 if(taskdto.getPoint()< 1 || taskdto.getPoint() > 100) {
+				
+				jsonObj.put("error","invalid taskText" );
+				return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
+			 }
+			
+			 if (taskdto.getPoint() < 5 || taskdto.getPoint() > 20) {
+				 jsonObj.put("error","invalid taskText" );
+				 return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
+			 }
 			
 			if(taskdto.getText().length()<=0  || taskdto.getText().length()>200) {
 				
-				return null;
+				jsonObj.put("error","invalid taskText" );
+				return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 			}
 			
 			
@@ -556,7 +613,9 @@ public class TestController {
 			 
 
 			if(task.getTaskType()!=Type.TRUE_FALSE && taskdto.getChoices().size()!=4) {
-				return null;
+
+				jsonObj.put("error","invalid task" );
+				return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 			}
 			
 			
@@ -565,9 +624,11 @@ public class TestController {
 				for (Choice choice : task.getChoices())
 				{
 					if(choice.getText()==null ) {
-						return null;
+						jsonObj.put("error","invalid task" );
+						return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 					}else if(choice.getText().length()<=0 || choice.getText().length()>20) {
-						return null;	
+						jsonObj.put("error","invalid task" );
+						return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 					}
 					
 					choice.setId(null);
@@ -584,7 +645,8 @@ public class TestController {
 					task.setSolution(taskdto.getSolutionTrueFalse());
 					
 				}else {
-					return null;
+					jsonObj.put("error","invalid task" );
+					return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 				}
 				
 			}else if(task.getTaskType()==Type.ORDER_LIST){
@@ -609,14 +671,16 @@ public class TestController {
 					
 					Choice choice = task.getChoices().get(Integer.parseInt(taskdto.getSolutionOneChoice()));
 					if(choice==null) {
-						return null;
+						jsonObj.put("error","invalid task" );
+						return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 					}
 					Long choiceId = choice.getId();
 					task.setSolution(Long.toString(choiceId));
 					
 					
 				}else {
-					return null;
+					jsonObj.put("error","invalid task" );
+					return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 				}
 			}else if(task.getTaskType()==Type.MULTIPLE_CHOICES) {
 				
@@ -631,12 +695,14 @@ public class TestController {
 
 							Choice choice= task.getChoices().get(Integer.parseInt(choiceIndexString)) ;
 							if(choice==null) {
-								return null;
+								jsonObj.put("error","invalid task" );
+								return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 							}
 							Long choiceId = choice.getId();
 							choiceIdList.add(Long.toString(choiceId));
 						}else {
-							return null;
+							jsonObj.put("error","invalid task" );
+							return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 						}
 					}
 					
@@ -644,11 +710,13 @@ public class TestController {
 					
 					
 				}else {
-					return null;
+					jsonObj.put("error","invalid task" );
+					return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 				}
 			
 			}else {
-				return null;
+				jsonObj.put("error","invalid task" );
+				return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 			}
 		}
 		
@@ -656,34 +724,39 @@ public class TestController {
 		testRepository.save(newTest);
 		
 		TestDTO tdto = modelMapper.map(newTest, TestDTO.class);
-		return tdto;
+		return new ResponseEntity<>(tdto,HttpStatus.OK);
    }
 	
 	
 	@PostMapping("/createdtestdtos/newTest/{userId}")
-	public TestDTO createNewTest(@PathVariable("userId") String userId,  @RequestBody TestRequest request) {
-		
+	public ResponseEntity<?> createNewTest(@PathVariable("userId") String userId,  @RequestBody TestRequest request) {
 		Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));		
+		JSONObject jsonObj = new JSONObject();
+		
 		if(!userOpt.isPresent())
 		{
-			return null;
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		User user = userOpt.get();
 		
 		if(user.getRole()!=Role.TEACHER)
 		{
-			return null;
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 
 		if(request.getTitle().length()<=0 || request.getTitle().length()>20) {
-	
-			return null;
+			
+			jsonObj.put("error","invalid title" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		
 		if(request.getSubject().length()<=0 || request.getSubject().length()>20) {
 			
-			return null;
+			jsonObj.put("error","invalid subject" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 		}
 		
 	
@@ -696,20 +769,37 @@ public class TestController {
 		
 		for (TaskDTO taskdto : request.getTasks()) {
 			
+			
+			 if(taskdto.getPoint()< 1 || taskdto.getPoint() > 100) {
+				
+				jsonObj.put("error","invalid taskText" );
+				return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
+			 }
+			
+			 if (taskdto.getPoint() < 5 || taskdto.getPoint() > 20) {
+				 jsonObj.put("error","invalid taskText" );
+				 return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
+			 }
+			
 			if(taskdto.getText().length()<=0  || taskdto.getText().length()>200) {
 				
-				return null;
+				jsonObj.put("error","invalid taskText" );
+				return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 			}
-
+			
+			
 			taskdto.setId(null);
 			task = modelMapper.map(taskdto, Task.class);
 			
 			task.setTest(newTest);  
 			newTasks.add(task);
 			taskRepository.save(task);
-			
+			 
+
 			if(task.getTaskType()!=Type.TRUE_FALSE && taskdto.getChoices().size()!=4) {
-				return null;
+
+				jsonObj.put("error","invalid task" );
+				return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 			}
 			
 			
@@ -717,19 +807,21 @@ public class TestController {
 			 
 				for (Choice choice : task.getChoices())
 				{
-					
 					if(choice.getText()==null ) {
-						return null;
+						jsonObj.put("error","invalid task" );
+						return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 					}else if(choice.getText().length()<=0 || choice.getText().length()>20) {
-						return null;	
+						jsonObj.put("error","invalid task" );
+						return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 					}
+					
 					choice.setId(null);
 					choice.setTask(task);
 				}
 				choiceRepository.saveAll( task.getChoices());
 			}
-			
 
+		
 			if(task.getTaskType()==Type.TRUE_FALSE) {
 				
 				if(taskdto.getSolutionTrueFalse()!=null &&  (taskdto.getSolutionTrueFalse().equals("0") || taskdto.getSolutionTrueFalse().equals("1"))) 
@@ -737,7 +829,8 @@ public class TestController {
 					task.setSolution(taskdto.getSolutionTrueFalse());
 					
 				}else {
-					return null;
+					jsonObj.put("error","invalid task" );
+					return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 				}
 				
 			}else if(task.getTaskType()==Type.ORDER_LIST){
@@ -762,14 +855,16 @@ public class TestController {
 					
 					Choice choice = task.getChoices().get(Integer.parseInt(taskdto.getSolutionOneChoice()));
 					if(choice==null) {
-						return null;
+						jsonObj.put("error","invalid task" );
+						return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 					}
 					Long choiceId = choice.getId();
 					task.setSolution(Long.toString(choiceId));
 					
 					
 				}else {
-					return null;
+					jsonObj.put("error","invalid task" );
+					return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 				}
 			}else if(task.getTaskType()==Type.MULTIPLE_CHOICES) {
 				
@@ -784,25 +879,28 @@ public class TestController {
 
 							Choice choice= task.getChoices().get(Integer.parseInt(choiceIndexString)) ;
 							if(choice==null) {
-								return null;
+								jsonObj.put("error","invalid task" );
+								return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 							}
 							Long choiceId = choice.getId();
 							choiceIdList.add(Long.toString(choiceId));
 						}else {
-							return null;
+							jsonObj.put("error","invalid task" );
+							return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 						}
 					}
-					
 					
 				task.setSolution(choiceIdList.stream().map(n -> String.valueOf(n)).collect(Collectors.joining(",")));
 					
 					
 				}else {
-					return null;
+					jsonObj.put("error","invalid task" );
+					return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 				}
 			
 			}else {
-				return null;
+				jsonObj.put("error","invalid task" );
+				return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 			}
 		}
 		
@@ -810,20 +908,22 @@ public class TestController {
 		testRepository.save(newTest);
 		
 		TestDTO tdto = modelMapper.map(newTest, TestDTO.class);
-		return tdto;
-   }
+		return new ResponseEntity<>(tdto,HttpStatus.OK);
+  }
 	
 	@GetMapping("/completedtestdtos/{userId}")
-	public List<CompletedTestDTO> getCompletedTests(@PathVariable("userId") String userId) {
+	public ResponseEntity<?> getCompletedTests(@PathVariable("userId") String userId) {
 		Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));		
+		JSONObject jsonObj = new JSONObject();
+		
 		if(!userOpt.isPresent())
 		{
-			return null;
+			jsonObj.put("error","user not found" );
+			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
+		
 		User user = userOpt.get();
-		
 		List<TestFill> testFillList = testFillRepository.findByUser(user);
-		
 		
 		List<CompletedTestDTO> dtoList = new ArrayList<CompletedTestDTO>(); 
 		testFillList.sort(Comparator.comparing(o -> o.getFillDate()));
@@ -884,7 +984,7 @@ public class TestController {
 			
 			dtoList.add(completedTestDto);
 		}
-		return dtoList;
+		return new ResponseEntity<>(dtoList,HttpStatus.OK);
 	}
 
 	@GetMapping("/testresults/{testId}/{userId}")
