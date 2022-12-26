@@ -20,11 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 import hu.dorin.felelj.enums.Role;
 import hu.dorin.felelj.model.User;
 import hu.dorin.felelj.repository.UserRepository;
+import hu.dorin.felelj.request.LoginRequest;
+import hu.dorin.felelj.request.SignUpRequest;
 import hu.dorin.felelj.security.JwtResponse;
 import hu.dorin.felelj.security.JwtUtils;
-import hu.dorin.felelj.security.LoginRequest;
-import hu.dorin.felelj.security.LoginResponse;
-import hu.dorin.felelj.security.SignUpRequest;
 import net.minidev.json.JSONObject;
 
 
