@@ -31,7 +31,7 @@ public class UserController {
 	private ModelMapper modelMapper;
 	
 	
-	@GetMapping("/userdtos/{id}")
+	@GetMapping("/profile/{id}")
 	public ResponseEntity<?> getUser(@PathVariable("id") Long id) {
 		Optional<User> userOpt = userRepository.findById(id);
 		List<Role> rolesList = new ArrayList<Role>();
