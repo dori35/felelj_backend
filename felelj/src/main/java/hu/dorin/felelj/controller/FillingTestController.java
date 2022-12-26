@@ -36,7 +36,7 @@ import hu.dorin.felelj.request.FillingTestRequest;
 import net.minidev.json.JSONObject;
 
 @RestController
-@RequestMapping("/fillingtestdtos")
+@RequestMapping("/fillingtest")
 public class FillingTestController {
 	@Autowired
 	private TestRepository testRepository;

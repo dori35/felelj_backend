@@ -41,7 +41,7 @@ public class CompletedTestController {
 	@Autowired
 	private ModelMapper modelMapper;
 	
-	@GetMapping("/completedtestdtos/{userId}")
+	@GetMapping("/completedtest/{userId}")
 	public ResponseEntity<?> getCompletedTests(@PathVariable("userId") String userId) {
 		Optional<User> userOpt = userRepository.findById(Long.parseLong(userId));		
 		JSONObject jsonObj = new JSONObject();

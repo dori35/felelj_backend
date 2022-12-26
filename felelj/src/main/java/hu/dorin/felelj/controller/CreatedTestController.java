@@ -37,7 +37,7 @@ import hu.dorin.felelj.request.TestRequest;
 import net.minidev.json.JSONObject;
 
 @RestController
-@RequestMapping("/createdtestdtos")
+@RequestMapping("/createdtest")
 public class CreatedTestController {
 
 	@Autowired
