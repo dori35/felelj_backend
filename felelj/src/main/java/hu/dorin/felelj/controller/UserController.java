@@ -48,11 +48,8 @@ public class UserController {
 		if(user.getRole()== Role.TEACHER ) {
 			rolesList.add(Role.TEACHER);
 			rolesList.add(Role.STUDENT);
-		}else if(user.getRole()== Role.STUDENT ){ 
+		}else { 
 			rolesList.add(Role.STUDENT);
-		}else {
-			jsonObj.put("error","invalid role" );
-			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		UserDTO userdto = modelMapper.map(user, UserDTO.class);
@@ -79,11 +76,8 @@ public class UserController {
 		if(user.getRole()== Role.TEACHER ) {
 			rolesList.add(Role.TEACHER);
 			rolesList.add(Role.STUDENT);
-		}else if(user.getRole()== Role.STUDENT ){ 
+		}else{ 
 			rolesList.add(Role.STUDENT);
-		}else {
-			jsonObj.put("error","invalid role" );
-			return new ResponseEntity<>(jsonObj,HttpStatus.NOT_FOUND);
 		}
 		
 		LoginUserDTO loginUserDTO = new LoginUserDTO(user.getId(),user.getIdentifier(),rolesList);
