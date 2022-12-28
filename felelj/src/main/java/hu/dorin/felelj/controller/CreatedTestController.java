@@ -169,7 +169,6 @@ public class CreatedTestController {
 		Test test = testOpt.get();
 		/*Test saveTest = modelMapper.map(test, Test.class);*/
 		
-		
 		if(!test.getIsActive())
 		{
 			jsonObj.put("error","test not found" );
@@ -203,7 +202,6 @@ public class CreatedTestController {
 		Test newTest = new Test( request.getTitle(),request.getSubject(), request.getRandom());
 		newTest.setCreatedBy(user);
 		testRepository.save(newTest);
-		
 		List<Task> newTasks = new ArrayList<Task>();
 		Task task  = null ;
 		for (TaskDTO taskdto : request.getTasks()) {
@@ -241,7 +239,6 @@ public class CreatedTestController {
 				return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 			}
 			
-			
 			if(task.getChoices()!=null) {			 
 			 
 				for (Choice choice : task.getChoices())
@@ -262,7 +259,6 @@ public class CreatedTestController {
 
 		
 			if(task.getTaskType()==Type.TRUE_FALSE) {
-				
 				if(taskdto.getSolutionTrueFalse()!=null &&  (taskdto.getSolutionTrueFalse().equals("0") || taskdto.getSolutionTrueFalse().equals("1"))) 
 				{
 					task.setSolution(taskdto.getSolutionTrueFalse());
@@ -342,10 +338,8 @@ public class CreatedTestController {
 				return new ResponseEntity<>(jsonObj,HttpStatus.BAD_REQUEST);
 			}
 		}
-		
 		taskRepository.saveAll(newTasks);
 		testRepository.save(newTest);
-		
 		TestDTO tdto = modelMapper.map(newTest, TestDTO.class);
 		return new ResponseEntity<>(tdto,HttpStatus.OK);
    }
