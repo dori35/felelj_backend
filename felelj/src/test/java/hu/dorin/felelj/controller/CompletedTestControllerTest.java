@@ -31,6 +31,7 @@ import hu.dorin.felelj.dto.CompletedTaskDTO;
 import hu.dorin.felelj.dto.CompletedTestDTO;
 import hu.dorin.felelj.enums.Role;
 import hu.dorin.felelj.enums.Type;
+import hu.dorin.felelj.model.Answer;
 import hu.dorin.felelj.model.Task;
 import hu.dorin.felelj.model.TestFill;
 import hu.dorin.felelj.model.User;
@@ -60,16 +61,28 @@ public class CompletedTestControllerTest {
 	@Test
 	void testGetCompletedTests() {
 		
-		/*
+		List<TestFill> testFillList  = new ArrayList<TestFill>();
 		List<CompletedTestDTO> dtoList = new ArrayList<CompletedTestDTO>();
-		List<CompletedTaskDTO> taskDTOList = new ArrayList<CompletedTaskDTO>();
+		User user = new User("Imelda Jacobs" , "$2a$10$/JJ7DIyeds/yIj.boXMPWuhoL01z7f2zKrD7/yN5Y1gltrSIVk7xi" , "gerry.hudson@gmail.com",	"user5"	,Role.STUDENT);
+		user.setId(5L);
+		
+		when(userRepository.findByIdentifier("user5")).thenReturn(Optional.of(user) );
+		when(userRepository.findById(5L)).thenReturn(Optional.of(user) );
+		when(testFillRepository.findByUser(user)).thenReturn(testFillList);
+
+		CompletedTestDTO[] res = this.restTemplate.getForObject("http://localhost:" + port + "/completedtest/5", CompletedTestDTO[].class);
+		assertNotNull(res);
+		assertTrue(res.length==0);
+	}
+	
+	@Test
+	void testGetCompletedTestsZeroPoint() {
+
 		CompletedTaskDTO taskDTO = new CompletedTaskDTO();
-		
-		
 		taskDTO.setId(1L);
 		taskDTO.setPoint(5);
 		taskDTO.setTaskType(Type.TRUE_FALSE);
-		taskDTO.setSolution("0");
+		taskDTO.setSolution("1");
 		taskDTO.setAnswer("0");
 		taskDTO.setCurrentPoint(5);
 		taskDTO.setText("text1");
@@ -88,52 +101,31 @@ public class CompletedTestControllerTest {
 		taskDTO2.setChoices(null);
 		
 
-		taskDTOList.add(taskDTO);
-		taskDTOList.add(taskDTO2);
-
-		CompletedTestDTO completedTestDto = new CompletedTestDTO();
-		completedTestDto.setId(1L);
-		completedTestDto.setTitle("Title1");
-		completedTestDto.setSubject("Subject1");
-		completedTestDto.setMaxPoint(10);
-		completedTestDto.setCurrentPoint(5);
-		completedTestDto.setTaskNumber(2);
-		completedTestDto.setTimeFrame(20);
-		completedTestDto.setFillDate("2022-10-03T11:25:30.00Z");
-		completedTestDto.setTasks(taskDTOList);
-		
-		dtoList.add(completedTestDto);
-		
-		User user = new User("Imelda Jacobs" , "$2a$10$/JJ7DIyeds/yIj.boXMPWuhoL01z7f2zKrD7/yN5Y1gltrSIVk7xi" , "gerry.hudson@gmail.com",	"5"	,Role.STUDENT);
-		user.setId(5L);
-		List<TestFill> testFillList  = new ArrayList<TestFill>();
 		
 		Task task1  = modelMapper.map(taskDTO, Task.class);
 		Task task2  = modelMapper.map(taskDTO2, Task.class);
 		List<Task> taskList = new ArrayList<Task>();
 		taskList.add(task1);
 		taskList.add(task2);
-		
-		hu.dorin.felelj.model.Test test = new hu.dorin.felelj.model.Test();
-		test.setId(1L);
-		test.setIsActive(true);
-		test.setTitle("Title1");
-		test.setSubject("Subject1");
+		hu.dorin.felelj.model.Test test  = new hu.dorin.felelj.model.Test();
 		test.setTasks(taskList);
-		test.setCreatedBy(user);
-		
+		List<TestFill> testFillList  = new ArrayList<TestFill>();
 		TestFill testFill = new TestFill();
 		testFill.setId(1L);
 		
+
+		List<Answer> answerList = new ArrayList<Answer>();
+		
+		Answer answer = new Answer();
+		answer.setAnswer("0");
+		Answer answer2 = new Answer();
+		answer2.setAnswer("1");
 		testFill.setFillDate( Instant.parse("2022-10-03T11:25:30.00Z"));
-		testFill.setPoint(10);
-		testFill.setStartDate("2022/9/4 9:59:40");
-		testFill.setUser(user);
+		testFill.setPoint(0);
 		testFill.setTest(test);
-		
-		testFillList.add(testFill);*/
-		
-		List<TestFill> testFillList  = new ArrayList<TestFill>();
+		testFill.setAnswers(answerList);
+		testFill.setStartDate("2022/9/4 9:59:40");
+		testFillList.add(testFill);
 		List<CompletedTestDTO> dtoList = new ArrayList<CompletedTestDTO>();
 		User user = new User("Imelda Jacobs" , "$2a$10$/JJ7DIyeds/yIj.boXMPWuhoL01z7f2zKrD7/yN5Y1gltrSIVk7xi" , "gerry.hudson@gmail.com",	"user5"	,Role.STUDENT);
 		user.setId(5L);
@@ -144,7 +136,75 @@ public class CompletedTestControllerTest {
 
 		CompletedTestDTO[] res = this.restTemplate.getForObject("http://localhost:" + port + "/completedtest/5", CompletedTestDTO[].class);
 		assertNotNull(res);
-		assertTrue(res.length==0);
+		assertTrue(res.length==1);
+		assertTrue(res[0].getMaxPoint()==10);
+		assertTrue(res[0].getCurrentPoint()==0);
+	}
+	
+	@Test
+	void testGetCompletedTestsMaxPoint() {
+
+		CompletedTaskDTO taskDTO = new CompletedTaskDTO();
+		taskDTO.setId(1L);
+		taskDTO.setPoint(5);
+		taskDTO.setTaskType(Type.TRUE_FALSE);
+		taskDTO.setSolution("0");
+		taskDTO.setAnswer("0");
+		taskDTO.setCurrentPoint(5);
+		taskDTO.setText("text1");
+		taskDTO.setTimeFrame(5);
+		taskDTO.setChoices(null);
+		
+		CompletedTaskDTO taskDTO2 = new CompletedTaskDTO();
+		taskDTO2.setId(2L);
+		taskDTO2.setPoint(5);
+		taskDTO2.setTaskType(Type.TRUE_FALSE);
+		taskDTO2.setSolution("1");
+		taskDTO2.setAnswer("1");
+		taskDTO2.setCurrentPoint(0);
+		taskDTO2.setText("text2");
+		taskDTO2.setTimeFrame(15);
+		taskDTO2.setChoices(null);
+		
+
+		
+		Task task1  = modelMapper.map(taskDTO, Task.class);
+		Task task2  = modelMapper.map(taskDTO2, Task.class);
+		List<Task> taskList = new ArrayList<Task>();
+		taskList.add(task1);
+		taskList.add(task2);
+		hu.dorin.felelj.model.Test test  = new hu.dorin.felelj.model.Test();
+		test.setTasks(taskList);
+		List<TestFill> testFillList  = new ArrayList<TestFill>();
+		TestFill testFill = new TestFill();
+		testFill.setId(1L);
+		
+
+		List<Answer> answerList = new ArrayList<Answer>();
+		
+		Answer answer = new Answer();
+		answer.setAnswer("0");
+		Answer answer2 = new Answer();
+		answer2.setAnswer("1");
+		testFill.setFillDate( Instant.parse("2022-10-03T11:25:30.00Z"));
+		testFill.setPoint(10);
+		testFill.setTest(test);
+		testFill.setAnswers(answerList);
+		testFill.setStartDate("2022/9/4 9:59:40");
+		testFillList.add(testFill);
+		List<CompletedTestDTO> dtoList = new ArrayList<CompletedTestDTO>();
+		User user = new User("Imelda Jacobs" , "$2a$10$/JJ7DIyeds/yIj.boXMPWuhoL01z7f2zKrD7/yN5Y1gltrSIVk7xi" , "gerry.hudson@gmail.com",	"user5"	,Role.STUDENT);
+		user.setId(5L);
+		
+		when(userRepository.findByIdentifier("user5")).thenReturn(Optional.of(user) );
+		when(userRepository.findById(5L)).thenReturn(Optional.of(user) );
+		when(testFillRepository.findByUser(user)).thenReturn(testFillList);
+
+		CompletedTestDTO[] res = this.restTemplate.getForObject("http://localhost:" + port + "/completedtest/5", CompletedTestDTO[].class);
+		assertNotNull(res);
+		assertTrue(res.length==1);
+		assertTrue(res[0].getMaxPoint()==10);
+		assertTrue(res[0].getCurrentPoint()==10);
 	}
 	
 	@Test

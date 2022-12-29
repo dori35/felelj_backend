@@ -167,7 +167,6 @@ public class CreatedTestController {
 		}
 		
 		Test test = testOpt.get();
-		/*Test saveTest = modelMapper.map(test, Test.class);*/
 		
 		if(!test.getIsActive())
 		{

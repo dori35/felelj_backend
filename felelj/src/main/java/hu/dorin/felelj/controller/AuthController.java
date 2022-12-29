@@ -57,14 +57,9 @@ public class AuthController {
 				.collect(Collectors.toList());
 
 		Optional<User> userOpt = userRepository.findByIdentifier(userDetails.getUsername());
-		/*JSONObject jsonObj = new JSONObject();
-		if(!userOpt.isPresent())
-		{
-			jsonObj.put("error","user not found" );
-			return new ResponseEntity<>(jsonObj,HttpStatus.UNAUTHORIZED);
-		}*/
 		
 		User user = userOpt.get();
+		
 		return ResponseEntity.ok(new JwtResponse(user.getId(),jwt,userDetails.getUsername(),roles));
 	}
 	

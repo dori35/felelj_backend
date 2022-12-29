@@ -28,7 +28,7 @@ import hu.dorin.felelj.repository.TaskRepository;
 import hu.dorin.felelj.repository.TestRepository;
 import hu.dorin.felelj.repository.UserRepository;
 
-
+//@Component
 public class DataLoader implements CommandLineRunner {
     private final UserRepository userRepository;
     private final TestRepository testRepository;
